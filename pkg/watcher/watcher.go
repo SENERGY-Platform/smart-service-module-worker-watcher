@@ -34,11 +34,11 @@ type Watcher struct {
 }
 
 type Checker interface {
-	Check(entity model.WatchedEntityInit) (changed bool, newHash string, err error)
+	Check(userId string, trigger model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error)
 }
 
 type Trigger interface {
-	Run(userId string, trigger model.Trigger) error
+	Run(userId string, trigger model.HttpRequest) error
 }
 
 func New(config configuration.Config, db db.Database, check Checker, trigger Trigger) *Watcher {
@@ -115,9 +115,9 @@ func (this *Watcher) Run(batchSize int64) (count int, err error) {
 	wg := sync.WaitGroup{}
 	for _, entity := range list {
 		wg.Add(1)
-		go func(entity model.WatchedEntityInit) {
+		go func(entity model.WatchedEntity) {
 			defer wg.Done()
-			chenged, newHash, temperr := this.checker.Check(entity)
+			chenged, newHash, temperr := this.checker.Check(entity.UserId, entity.Watch, entity.HashType, entity.LastHash)
 			if temperr != nil {
 				err = temperr
 				return
@@ -134,7 +134,7 @@ func (this *Watcher) Run(batchSize int64) (count int, err error) {
 					return
 				}
 			}
-		}(entity.WatchedEntityInit)
+		}(entity)
 	}
 	wg.Wait()
 	return len(list), err

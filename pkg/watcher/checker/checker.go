@@ -29,7 +29,7 @@ func New(config configuration.Config) (*Checker, error) {
 	return &Checker{config: config}, nil
 }
 
-func (this *Checker) Check(entity model.WatchedEntityInit) (changed bool, newHash string, err error) {
+func (this *Checker) Check(userId string, trigger model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error) {
 	//TODO implement me
 	panic("implement me")
 }

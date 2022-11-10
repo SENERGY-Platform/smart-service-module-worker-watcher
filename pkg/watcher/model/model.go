@@ -26,12 +26,12 @@ type WatchedEntity struct {
 }
 
 type WatchedEntityInit struct {
-	Id               string `json:"id"`
-	UserId           string `json:"user_id"`
-	Interval         string `json:"interval"`
-	HashType         string `json:"hash_type"`
-	WatchHttpRequest `bson:",inline"`
-	Trigger          `bson:",inline"`
+	Id       string      `json:"id"`
+	UserId   string      `json:"user_id"`
+	Interval string      `json:"interval"`
+	HashType string      `json:"hash_type"`
+	Watch    HttpRequest `json:"watch"`
+	Trigger  HttpRequest `json:"trigger"`
 }
 
 type WatchedEntityFetchInfo struct {
@@ -39,13 +39,10 @@ type WatchedEntityFetchInfo struct {
 	LastHash             string `json:"last_hash"`
 }
 
-type WatchHttpRequest struct {
+type HttpRequest struct {
 	Method       string      `json:"method"`
 	Endpoint     string      `json:"endpoint"`
 	Body         []byte      `json:"body"`
 	AddAuthToken bool        `json:"add_auth_token"`
 	Header       http.Header `json:"header"`
-}
-
-type Trigger struct {
 }

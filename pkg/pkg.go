@@ -43,7 +43,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-		t, err := trigger.New(config)
+		t, err := trigger.New(config, libConfig)
 		if err != nil {
 			return nil, err
 		}
