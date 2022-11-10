@@ -19,9 +19,8 @@ package trigger
 import (
 	"bytes"
 	"fmt"
-	libconfig "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/auth"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"io"
 	"net/http"
@@ -29,12 +28,12 @@ import (
 )
 
 type Trigger struct {
-	config        configuration.Config
-	tokenprovider func(userid string) (token auth.Token, err error)
+	config configuration.Config
+	auth   *auth.Auth
 }
 
-func New(config configuration.Config, libConf libconfig.Config) (*Trigger, error) {
-	return &Trigger{config: config, tokenprovider: auth.GetCachedTokenProvider(libConf)}, nil
+func New(config configuration.Config, auth *auth.Auth) (*Trigger, error) {
+	return &Trigger{config: config, auth: auth}, nil
 }
 
 func (this *Trigger) Run(userId string, trigger model.HttpRequest) error {
@@ -46,7 +45,7 @@ func (this *Trigger) Run(userId string, trigger model.HttpRequest) error {
 		req.Header[key] = value
 	}
 	if trigger.AddAuthToken {
-		token, err := this.tokenprovider(userId)
+		token, err := this.auth.ExchangeUserToken(userId)
 		if err != nil {
 			return err
 		}

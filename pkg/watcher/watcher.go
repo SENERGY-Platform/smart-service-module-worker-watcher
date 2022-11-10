@@ -34,7 +34,7 @@ type Watcher struct {
 }
 
 type Checker interface {
-	Check(userId string, trigger model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error)
+	Check(userId string, request model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error)
 }
 
 type Trigger interface {

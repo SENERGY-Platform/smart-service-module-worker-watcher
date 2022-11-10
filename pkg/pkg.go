@@ -34,16 +34,16 @@ import (
 )
 
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, libConfig libconfiguration.Config) error {
-	handlerFactory := func(auth *auth.Auth, smartServiceRepo *smartservicerepository.SmartServiceRepository) (camunda.Handler, error) {
+	handlerFactory := func(a *auth.Auth, smartServiceRepo *smartservicerepository.SmartServiceRepository) (camunda.Handler, error) {
 		db, err := mongo.New(config, ctx)
 		if err != nil {
 			return nil, err
 		}
-		c, err := checker.New(config)
+		c, err := checker.New(config, a)
 		if err != nil {
 			return nil, err
 		}
-		t, err := trigger.New(config, libConfig)
+		t, err := trigger.New(config, a)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-		return worker.New(config, libConfig, auth, smartServiceRepo, w), nil
+		return worker.New(config, libConfig, a, smartServiceRepo, w), nil
 	}
 	return lib.Start(ctx, wg, libConfig, handlerFactory)
 }
