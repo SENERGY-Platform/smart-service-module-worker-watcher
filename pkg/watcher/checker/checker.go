@@ -41,7 +41,7 @@ func (this *Checker) Check(userId string, request model.HttpRequest, hashType st
 	if err != nil {
 		return false, "", err
 	}
-	newHash, err = this.hash(hashType, payload)
+	newHash, err = hash(hashType, payload)
 	if err != nil {
 		return false, "", err
 	}
@@ -78,9 +78,4 @@ func (this *Checker) request(userId string, trigger model.HttpRequest) (payload 
 		return nil, fmt.Errorf("unexpected trigger response: %v, %v", resp.StatusCode, string(payload))
 	}
 	return payload, nil
-}
-
-func (this *Checker) hash(hashType string, payload []byte) (string, error) {
-	//TODO
-	panic("not implemented")
 }

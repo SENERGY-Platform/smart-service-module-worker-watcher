@@ -128,10 +128,12 @@ func (this *Watcher) Run(batchSize int64) (count int, err error) {
 					err = temperr
 					return
 				}
-				temperr = this.trigger.Run(entity.UserId, entity.Trigger)
-				if temperr != nil {
-					err = temperr
-					return
+				if entity.LastHash != "" {
+					temperr = this.trigger.Run(entity.UserId, entity.Trigger)
+					if temperr != nil {
+						err = temperr
+						return
+					}
 				}
 			}
 		}(entity)
