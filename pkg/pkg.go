@@ -47,15 +47,13 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-		w := watcher.New(config, db, c, t)
+		cleanupChecker := cleanup.New(smartServiceRepo)
+		w := watcher.New(config, db, c, t, cleanupChecker)
 		err = w.Start(ctx, wg)
 		if err != nil {
 			return nil, err
 		}
-		err = cleanup.Start(ctx, wg, config, w, smartServiceRepo)
-		if err != nil {
-			return nil, err
-		}
+
 		return worker.New(config, libConfig, a, smartServiceRepo, w), nil
 	}
 	return lib.Start(ctx, wg, libConfig, handlerFactory)

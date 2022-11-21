@@ -27,10 +27,11 @@ import (
 )
 
 type Watcher struct {
-	config  configuration.Config
-	db      db.Database
-	checker Checker
-	trigger Trigger
+	config         configuration.Config
+	db             db.Database
+	checker        Checker
+	trigger        Trigger
+	cleanupChecker CleanupChecker
 }
 
 type Checker interface {
@@ -41,12 +42,17 @@ type Trigger interface {
 	Run(userId string, trigger model.HttpRequest) error
 }
 
-func New(config configuration.Config, db db.Database, check Checker, trigger Trigger) *Watcher {
+type CleanupChecker interface {
+	Check(model.WatchedEntity) (remove bool, err error)
+}
+
+func New(config configuration.Config, db db.Database, check Checker, trigger Trigger, cleanupChecker CleanupChecker) *Watcher {
 	return &Watcher{
-		config:  config,
-		db:      db,
-		checker: check,
-		trigger: trigger,
+		config:         config,
+		db:             db,
+		checker:        check,
+		trigger:        trigger,
+		cleanupChecker: cleanupChecker,
 	}
 }
 
@@ -117,6 +123,19 @@ func (this *Watcher) Run(batchSize int64) (count int, err error) {
 		wg.Add(1)
 		go func(entity model.WatchedEntity) {
 			defer wg.Done()
+			remove, temperr := this.cleanupChecker.Check(entity)
+			if temperr != nil {
+				err = temperr
+				return
+			}
+			if remove {
+				temperr = this.db.Delete(entity.Id, entity.UserId)
+				if temperr != nil {
+					err = temperr
+					return
+				}
+				return
+			}
 			chenged, newHash, temperr := this.checker.Check(entity.UserId, entity.Watch, entity.HashType, entity.LastHash)
 			if temperr != nil {
 				err = temperr

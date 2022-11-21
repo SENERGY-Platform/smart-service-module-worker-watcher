@@ -3,8 +3,7 @@ module github.com/SENERGY-Platform/smart-service-module-worker-watcher
 go 1.19
 
 require (
-	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20221108112635-50c2c3ccf5f1
-	github.com/coocood/freecache v1.2.1
+	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20221121125909-ac9bafdd3925
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/ory/dockertest/v3 v3.9.1
@@ -18,6 +17,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/coocood/freecache v1.2.1 // indirect
 	github.com/docker/cli v20.10.14+incompatible // indirect
 	github.com/docker/docker v20.10.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect

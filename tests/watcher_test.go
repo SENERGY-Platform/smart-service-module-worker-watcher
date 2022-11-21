@@ -72,7 +72,7 @@ func TestWatcher(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	w := watcher.New(config, db, c, tr)
+	w := watcher.New(config, db, c, tr, mocks.CleanupChecker{})
 	err = w.Start(ctx, wg)
 	if err != nil {
 		t.Error(err)

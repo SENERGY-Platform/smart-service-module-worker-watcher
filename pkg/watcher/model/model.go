@@ -26,12 +26,14 @@ type WatchedEntity struct {
 }
 
 type WatchedEntityInit struct {
-	Id       string      `json:"id"`
-	UserId   string      `json:"user_id"`
-	Interval string      `json:"interval"`
-	HashType string      `json:"hash_type"`
-	Watch    HttpRequest `json:"watch"`
-	Trigger  HttpRequest `json:"trigger"`
+	Id        string            `json:"id"`
+	UserId    string            `json:"user_id"`
+	Interval  string            `json:"interval"`
+	HashType  string            `json:"hash_type"`
+	Watch     HttpRequest       `json:"watch"`
+	Trigger   HttpRequest       `json:"trigger"`
+	Info      map[string]string `json:"info,omitempty"`
+	CreatedAt int64             `json:"created_at"`
 }
 
 type WatchedEntityFetchInfo struct {
@@ -46,3 +48,5 @@ type HttpRequest struct {
 	AddAuthToken bool        `json:"add_auth_token"`
 	Header       http.Header `json:"header"`
 }
+
+const WatchedEntityInfoModuleIdFieldName = "module_id"

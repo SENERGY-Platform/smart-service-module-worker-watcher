@@ -116,6 +116,9 @@ func (this *Mongo) UpdateHash(id string, userId string, hash string) error {
 }
 
 func (this *Mongo) Set(element model.WatchedEntityInit) error {
+	if element.CreatedAt == 0 {
+		element.CreatedAt = time.Now().Unix()
+	}
 	ctx, _ := getTimeoutContext()
 	_, err := this.entityCollection().ReplaceOne(
 		ctx,

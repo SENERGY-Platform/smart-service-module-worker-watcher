@@ -17,14 +17,52 @@
 package cleanup
 
 import (
-	"context"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/smartservicerepository"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
-	"sync"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
+	"net/http"
+	"time"
 )
 
-func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, w *watcher.Watcher, smr *smartservicerepository.SmartServiceRepository) error {
-	//TODO: implement me
-	panic("implement me")
+type Checker struct {
+	smr *smartservicerepository.SmartServiceRepository
+}
+
+func New(smr *smartservicerepository.SmartServiceRepository) *Checker {
+	return &Checker{smr: smr}
+}
+
+func (this *Checker) Check(entity model.WatchedEntity) (remove bool, err error) {
+	return Check(entity, this.smr)
+}
+
+func Check(element model.WatchedEntity, smr *smartservicerepository.SmartServiceRepository) (remove bool, err error) {
+	if time.Since(time.Unix(element.CreatedAt, 0)) < time.Minute {
+		return false, nil
+	}
+	moduleId, exists := element.Info[model.WatchedEntityInfoModuleIdFieldName]
+	if !exists {
+		return false, nil
+	}
+	_, err, code := smr.GetModule(element.UserId, moduleId)
+	if code == http.StatusNotFound {
+		return true, nil
+	}
+	return false, err
+}
+
+type QueryOptions struct {
+	limit  int64
+	offset int64
+}
+
+func (this QueryOptions) GetLimit() int64 {
+	return this.limit
+}
+
+func (this QueryOptions) GetOffset() int64 {
+	return this.offset
+}
+
+func (this QueryOptions) GetSort() string {
+	return "id.asc"
 }
