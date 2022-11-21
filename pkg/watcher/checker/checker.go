@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"io"
 	"net/http"
@@ -28,12 +27,15 @@ import (
 )
 
 type Checker struct {
-	config configuration.Config
-	auth   *auth.Auth
+	auth Auth
 }
 
-func New(config configuration.Config, auth *auth.Auth) (*Checker, error) {
-	return &Checker{config: config, auth: auth}, nil
+type Auth interface {
+	ExchangeUserToken(userid string) (token auth.Token, err error)
+}
+
+func New(auth Auth) (*Checker, error) {
+	return &Checker{auth: auth}, nil
 }
 
 func (this *Checker) Check(userId string, request model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error) {

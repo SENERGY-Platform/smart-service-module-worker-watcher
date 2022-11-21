@@ -25,13 +25,17 @@ import (
 	"sort"
 )
 
+const HASH_TYPE_MD5 = "md5"
+const HASH_TYPE_SHA256 = "sha256"
+const HASH_TYPE_DEVICEIDS = "deviceids"
+
 func hash(hashType string, payload []byte) (string, error) {
 	switch hashType {
-	case "md5":
+	case HASH_TYPE_MD5:
 		return fmt.Sprintf("%x", md5.Sum(payload)), nil
-	case "sha256":
+	case HASH_TYPE_SHA256:
 		return fmt.Sprintf("%x", sha256.Sum256(payload)), nil
-	case "deviceids":
+	case HASH_TYPE_DEVICEIDS:
 		return deviceIdsHash(payload)
 	default:
 		return fmt.Sprintf("%x", md5.Sum(payload)), nil

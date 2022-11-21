@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"io"
 	"net/http"
@@ -28,12 +27,15 @@ import (
 )
 
 type Trigger struct {
-	config configuration.Config
-	auth   *auth.Auth
+	auth Auth
 }
 
-func New(config configuration.Config, auth *auth.Auth) (*Trigger, error) {
-	return &Trigger{config: config, auth: auth}, nil
+type Auth interface {
+	ExchangeUserToken(userid string) (token auth.Token, err error)
+}
+
+func New(auth Auth) (*Trigger, error) {
+	return &Trigger{auth: auth}, nil
 }
 
 func (this *Trigger) Run(userId string, trigger model.HttpRequest) error {
