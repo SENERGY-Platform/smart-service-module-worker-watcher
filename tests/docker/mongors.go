@@ -63,7 +63,7 @@ func MongoRs(ctx context.Context, wg *sync.WaitGroup) (mongourl string, err erro
 		wg.Done()
 	}()
 
-	go Dockerlog(pool, ctx, container, "MONGO")
+	//go Dockerlog(pool, ctx, container, "MONGO")
 
 	err = pool.Retry(func() error {
 		log.Println("try mongodb connection...")
