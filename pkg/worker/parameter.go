@@ -88,7 +88,7 @@ func (this *Worker) getWatchInterval(task lib_model.CamundaExternalTask) (result
 }
 
 func (this *Worker) getHashType(task lib_model.CamundaExternalTask) string {
-	variable, ok := task.Variables[this.config.WorkerParamPrefix+"watch_interval"]
+	variable, ok := task.Variables[this.config.WorkerParamPrefix+"hash_type"]
 	if !ok {
 		return this.config.DefaultHashType
 	}

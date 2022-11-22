@@ -1,0 +1,24 @@
+[
+    {
+        "id": "task1",
+        "processInstanceId": "process-instance-1",
+        "processDefinitionId": "process-definition-1",
+        "variables": {
+            "watcher.maintenance_procedure": {
+                "value": "update"
+            },
+            "watcher.watch_interval": {
+                "value": "2h"
+            },
+            "watcher.hash_type": {
+                "value": "deviceids"
+            },
+            "watcher.watch_request": {
+                "value": "{\"method\":\"POST\",\"endpoint\":\"/query\",\"body\":\"eyJmb28iOiJiYXIifQ==\",\"add_auth_token\":false,\"header\":null}"
+            },
+            "watcher.maintenance_procedure_inputs.foo": {
+                "value": "bar"
+            }
+        }
+    }
+]

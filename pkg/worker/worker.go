@@ -68,15 +68,9 @@ type SmartServiceRepo interface {
 }
 
 func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.Module, outputs map[string]interface{}, err error) {
-	userId, err := this.smartServiceRepo.GetInstanceUser(task.ProcessInstanceId)
-	if err != nil {
-		log.Println("ERROR: unable to get instance user", err)
-		return modules, outputs, err
-	}
-
 	sm, err := this.smartServiceRepo.GetSmartServiceInstance(task.ProcessInstanceId)
 	if err != nil {
-		log.Println("ERROR: unable to get instance user", err)
+		log.Println("ERROR: unable to get instance", err)
 		return modules, outputs, err
 	}
 
@@ -96,7 +90,7 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 
 	err = this.watcher.Set(model.WatchedEntityInit{
 		Id:       id,
-		UserId:   userId,
+		UserId:   sm.UserId,
 		Interval: this.getWatchInterval(task).String(),
 		HashType: this.getHashType(task),
 		Watch:    httpWatch,
@@ -116,7 +110,7 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 
 	moduleDeleteInfo := &lib_model.ModuleDeleteInfo{
 		Url:    this.config.AdvertisedUrl + "/watcher/" + url.PathEscape(id),
-		UserId: userId,
+		UserId: sm.UserId,
 	}
 
 	outputs = map[string]interface{}{
