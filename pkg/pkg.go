@@ -53,8 +53,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-
-		return worker.New(config, libConfig, a, smartServiceRepo, w), nil
+		return worker.New(config, libConfig, a, smartServiceRepo, w)
 	}
 	return lib.Start(ctx, wg, libConfig, handlerFactory)
 }

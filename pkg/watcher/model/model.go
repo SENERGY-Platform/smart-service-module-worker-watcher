@@ -26,14 +26,13 @@ type WatchedEntity struct {
 }
 
 type WatchedEntityInit struct {
-	Id        string            `json:"id"`
-	UserId    string            `json:"user_id"`
-	Interval  string            `json:"interval"`
-	HashType  string            `json:"hash_type"`
-	Watch     HttpRequest       `json:"watch"`
-	Trigger   HttpRequest       `json:"trigger"`
-	Info      map[string]string `json:"info,omitempty"`
-	CreatedAt int64             `json:"created_at"`
+	Id        string      `json:"id"`
+	UserId    string      `json:"user_id"`
+	Interval  string      `json:"interval"`
+	HashType  string      `json:"hash_type"`
+	Watch     HttpRequest `json:"watch"`
+	Trigger   HttpRequest `json:"trigger"`
+	CreatedAt int64       `json:"created_at"`
 }
 
 type WatchedEntityFetchInfo struct {
@@ -49,4 +48,11 @@ type HttpRequest struct {
 	Header       http.Header `json:"header"`
 }
 
-const WatchedEntityInfoModuleIdFieldName = "module_id"
+type SmartServiceParameters []SmartServiceParameter
+
+type SmartServiceParameter struct {
+	Id         string      `json:"id"`
+	Value      interface{} `json:"value"`
+	Label      string      `json:"label"`
+	ValueLabel string      `json:"value_label,omitempty"`
+}

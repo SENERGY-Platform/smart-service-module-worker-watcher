@@ -38,7 +38,7 @@ type WatcherEndpoints struct{}
 // @Failure      500
 // @Router       /watcher/{id} [delete]
 func (this *WatcherEndpoints) Delete(config configuration.Config, router *httprouter.Router, ctrl Controller) {
-	router.GET("/watcher/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE("/watcher/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		token, err := auth.Parse(request.Header.Get("Authorization"))
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)

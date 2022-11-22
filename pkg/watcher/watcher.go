@@ -56,6 +56,10 @@ func New(config configuration.Config, db db.Database, check Checker, trigger Tri
 	}
 }
 
+func (this *Watcher) Set(entity model.WatchedEntityInit) error {
+	return this.db.Set(entity)
+}
+
 // Start watching cycle with configured WatchInterval
 // wg may be nil
 func (this *Watcher) Start(ctx context.Context, wg *sync.WaitGroup) error {

@@ -23,4 +23,8 @@ type Config struct {
 	MongoCollectionWatchedEntity string `json:"mongo_collection_watched_entity"`
 	WatchInterval                string `json:"watch_interval"`
 	BatchSize                    int64  `json:"batch_size"`
+	WorkerParamPrefix            string `json:"worker_param_prefix"`
+	MinWatchInterval             string `json:"min_watch_interval"`
+	DefaultWatchInterval         string `json:"default_watch_interval"`
+	DefaultHashType              string `json:"default_hash_type"`
 }

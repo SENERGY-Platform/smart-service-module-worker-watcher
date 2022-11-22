@@ -1,1 +1,27 @@
-{}
+{
+    "advertised_url": "http://localhost:8080",
+    "mongo_url": "",
+    "mongo_table": "watcher",
+    "mongo_collection_watched_entity": "watcher",
+    "watch_interval": "1s",
+    "batch_size": 100,
+    "worker_param_prefix": "watcher.",
+    "min_watch_interval": "1m",
+    "default_watch_interval": "1h",
+    "default_hash_type": "md5",
+    
+    
+    "smart_service_repository_url": "",
+
+    "camunda_worker_id": "watcher",
+    "camunda_worker_topic": "watcher",
+    "camunda_lock_duration_in_ms": 60000,
+    "camunda_worker_wait_duration_in_ms": 1000,
+    "camunda_fetch_max_tasks": 100,
+
+    "auth_endpoint": "",
+    "auth_client_id": "",
+    "auth_client_secret": "",
+    "token_cache_default_expiration_in_seconds": 60,
+    "token_cache_size_in_mb": 20
+}

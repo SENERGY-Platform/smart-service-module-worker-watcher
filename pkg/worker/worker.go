@@ -17,60 +17,147 @@
 package worker
 
 import (
+	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
 	libconfiguration "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/model"
+	lib_model "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"log"
+	"net/url"
 	"runtime/debug"
+	"time"
 )
 
-func New(config configuration.Config, libConfig libconfiguration.Config, auth *auth.Auth, smartServiceRepo SmartServiceRepo, w *watcher.Watcher) *Worker {
-	return &Worker{config: config, libConfig: libConfig, auth: auth, smartServiceRepo: smartServiceRepo, watcher: w}
+func New(config configuration.Config, libConfig libconfiguration.Config, auth *auth.Auth, smartServiceRepo SmartServiceRepo, w *watcher.Watcher) (*Worker, error) {
+	minWatchInterval, err := time.ParseDuration(config.MinWatchInterval)
+	if err != nil {
+		return nil, err
+	}
+	defaultWatchInterval, err := time.ParseDuration(config.DefaultWatchInterval)
+	if err != nil {
+		return nil, err
+	}
+	return &Worker{
+		config:               config,
+		libConfig:            libConfig,
+		auth:                 auth,
+		smartServiceRepo:     smartServiceRepo,
+		watcher:              w,
+		defaultWatchInterval: defaultWatchInterval,
+		minWatchInterval:     minWatchInterval,
+	}, nil
 }
 
 type Worker struct {
-	config           configuration.Config
-	libConfig        libconfiguration.Config
-	auth             *auth.Auth
-	smartServiceRepo SmartServiceRepo
-	watcher          *watcher.Watcher
+	config               configuration.Config
+	libConfig            libconfiguration.Config
+	auth                 *auth.Auth
+	smartServiceRepo     SmartServiceRepo
+	watcher              *watcher.Watcher
+	defaultWatchInterval time.Duration
+	minWatchInterval     time.Duration
 }
 
 type SmartServiceRepo interface {
 	GetInstanceUser(instanceId string) (userId string, err error)
-	UseModuleDeleteInfo(info model.ModuleDeleteInfo) error
-	ListExistingModules(processInstanceId string, query model.ModulQuery) (result []model.SmartServiceModule, err error)
+	UseModuleDeleteInfo(info lib_model.ModuleDeleteInfo) error
+	ListExistingModules(processInstanceId string, query lib_model.ModulQuery) (result []lib_model.SmartServiceModule, err error)
+	GetSmartServiceInstance(processInstanceId string) (result lib_model.SmartServiceInstance, err error)
 }
 
-func (this *Worker) Do(task model.CamundaExternalTask) (modules []model.Module, outputs map[string]interface{}, err error) {
+func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.Module, outputs map[string]interface{}, err error) {
 	userId, err := this.smartServiceRepo.GetInstanceUser(task.ProcessInstanceId)
 	if err != nil {
 		log.Println("ERROR: unable to get instance user", err)
 		return modules, outputs, err
 	}
-	token, err := this.auth.ExchangeUserToken(userId)
+
+	sm, err := this.smartServiceRepo.GetSmartServiceInstance(task.ProcessInstanceId)
 	if err != nil {
-		log.Println("ERROR: unable to exchange user token", err)
+		log.Println("ERROR: unable to get instance user", err)
 		return modules, outputs, err
 	}
 
-	//TODO: replace with real code
-	log.Println(token)
+	id := this.getModuleId(task)
+	procedure := this.getMaintenanceProcedureEventName(task)
+	httpWatch, err := this.getWatchedHttpRequest(task)
+	if err != nil {
+		log.Println("ERROR: unable to read watched http request parameter", err)
+		return modules, outputs, err
+	}
+
+	maintenanceProcedureInputs, err := json.Marshal(this.getMaintenanceProcedureInputs(task))
+	if err != nil {
+		log.Println("ERROR: unable to marshal trigger payload", err)
+		return modules, outputs, err
+	}
+
+	err = this.watcher.Set(model.WatchedEntityInit{
+		Id:       id,
+		UserId:   userId,
+		Interval: this.getWatchInterval(task).String(),
+		HashType: this.getHashType(task),
+		Watch:    httpWatch,
+		Trigger: model.HttpRequest{
+			Method:       "POST",
+			Endpoint:     this.libConfig.SmartServiceRepositoryUrl + "/instances/" + url.PathEscape(sm.Id) + "/maintenance-procedures/" + url.PathEscape(procedure) + "/start",
+			Body:         maintenanceProcedureInputs,
+			AddAuthToken: true,
+		},
+		CreatedAt: time.Now().Unix(),
+	})
+
+	if err != nil {
+		log.Println("ERROR: unable to create watcher", err)
+		return modules, outputs, err
+	}
+
+	moduleDeleteInfo := &lib_model.ModuleDeleteInfo{
+		Url:    this.config.AdvertisedUrl + "/watcher/" + url.PathEscape(id),
+		UserId: userId,
+	}
+
+	outputs = map[string]interface{}{
+		"watcher_id": id,
+	}
+
+	modules = []lib_model.Module{{
+		Id:               id,
+		ProcesInstanceId: task.ProcessInstanceId,
+		SmartServiceModuleInit: lib_model.SmartServiceModuleInit{
+			DeleteInfo: moduleDeleteInfo,
+			ModuleType: this.libConfig.CamundaWorkerTopic,
+			ModuleData: outputs,
+		},
+	}}
 
 	return modules, outputs, err
 }
 
-func (this *Worker) Undo(modules []model.Module, reason error) {
+func (this *Worker) Undo(modules []lib_model.Module, reason error) {
 	log.Println("UNDO:", reason)
 	for _, module := range modules {
 		if module.DeleteInfo != nil {
-			err := this.smartServiceRepo.UseModuleDeleteInfo(*module.DeleteInfo)
-			if err != nil {
-				log.Println("ERROR:", err)
-				debug.PrintStack()
+			if module.ModuleType == this.libConfig.CamundaWorkerTopic {
+				err := this.watcher.DeleteWatcher(module.DeleteInfo.UserId, module.Id)
+				if err != nil {
+					log.Println("ERROR:", err)
+					debug.PrintStack()
+				}
+			} else {
+				// keep this code, in case additional moules are added later
+				err := this.smartServiceRepo.UseModuleDeleteInfo(*module.DeleteInfo)
+				if err != nil {
+					log.Println("ERROR:", err)
+					debug.PrintStack()
+				}
 			}
 		}
 	}
+}
+
+func (this *Worker) getModuleId(task lib_model.CamundaExternalTask) string {
+	return task.ProcessInstanceId + "." + task.Id
 }

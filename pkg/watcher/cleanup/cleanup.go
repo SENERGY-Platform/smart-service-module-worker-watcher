@@ -39,11 +39,7 @@ func Check(element model.WatchedEntity, smr *smartservicerepository.SmartService
 	if time.Since(time.Unix(element.CreatedAt, 0)) < time.Minute {
 		return false, nil
 	}
-	moduleId, exists := element.Info[model.WatchedEntityInfoModuleIdFieldName]
-	if !exists {
-		return false, nil
-	}
-	_, err, code := smr.GetModule(element.UserId, moduleId)
+	_, err, code := smr.GetModule(element.UserId, element.Id)
 	if code == http.StatusNotFound {
 		return true, nil
 	}
