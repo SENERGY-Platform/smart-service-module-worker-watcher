@@ -66,6 +66,36 @@ func TestChecker(t *testing.T) {
 		Header:       nil,
 	}
 
+	t.Run("isolated local check", func(t *testing.T) {
+		_, _, err := c.Check("test-user", model.HttpRequest{
+			Method:       "POST",
+			Endpoint:     targetUrl + "/query",
+			Body:         []byte(`{"foo":"bar"}`),
+			AddAuthToken: true,
+			Header:       nil,
+			Isolated:     true,
+		}, checker.HASH_TYPE_MD5, lastHash)
+		if err == nil {
+			t.Error("missing 'is not a public IP address' error")
+			return
+		}
+	})
+
+	t.Run("isolated public check", func(t *testing.T) {
+		_, _, err := c.Check("test-user", model.HttpRequest{
+			Method:       "GET",
+			Endpoint:     "http://example.com",
+			Body:         nil,
+			AddAuthToken: false,
+			Header:       nil,
+			Isolated:     true,
+		}, checker.HASH_TYPE_MD5, lastHash)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+
 	t.Run("first check", func(t *testing.T) {
 		expectedNewHash := "ae2d699aca20886f6bed96a0425c6168"
 		changed, newHash, err := c.Check("test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
