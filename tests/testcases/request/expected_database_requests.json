@@ -13,14 +13,16 @@
                     "add_auth_token":false,
                     "header":{
 
-                    }
+                    },
+                    "isolated": true
                 },
                 "trigger":{
                     "method":"POST",
                     "endpoint":"http://smr:8080/instances/smart-service-id-foo/maintenance-procedures/update/start",
                     "body":"W3siaWQiOiJmb28iLCJ2YWx1ZSI6ImJhciIsImxhYmVsIjoiZm9vIiwidmFsdWVfbGFiZWwiOiJiYXIifV0=",
                     "add_auth_token":true,
-                    "header":null
+                    "header":null,
+                    "isolated": false
                 },
                 "created_at":0
             }

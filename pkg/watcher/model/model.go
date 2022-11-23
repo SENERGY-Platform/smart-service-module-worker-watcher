@@ -46,4 +46,5 @@ type HttpRequest struct {
 	Body         []byte      `json:"body"`
 	AddAuthToken bool        `json:"add_auth_token"`
 	Header       http.Header `json:"header"`
+	Isolated     bool        `json:"isolated"`
 }

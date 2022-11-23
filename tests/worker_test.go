@@ -55,6 +55,7 @@ func TestWithMocks(t *testing.T) {
 	libConf.CamundaWorkerWaitDurationInMs = 200
 	conf.WatchInterval = "1h"
 	conf.DeviceSelectionApi = "http://device-selection-url:8080"
+	conf.AllowGenericWatchRequests = true
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
@@ -156,11 +157,11 @@ func runTest(t *testing.T, testCaseLocation string, config configuration.Config,
 
 func StartMock(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, libConfig libconfig.Config, db db.Database) error {
 	handlerFactory := func(a *auth.Auth, smartServiceRepo *smartservicerepository.SmartServiceRepository) (camunda.Handler, error) {
-		c, err := checker.New(a)
+		c, err := checker.New(config, a)
 		if err != nil {
 			return nil, err
 		}
-		t, err := trigger.New(a)
+		t, err := trigger.New(config, a)
 		if err != nil {
 			return nil, err
 		}

@@ -39,11 +39,11 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-		c, err := checker.New(a)
+		c, err := checker.New(config, a)
 		if err != nil {
 			return nil, err
 		}
-		t, err := trigger.New(a)
+		t, err := trigger.New(config, a)
 		if err != nil {
 			return nil, err
 		}

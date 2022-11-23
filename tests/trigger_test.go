@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/trigger"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/tests/mocks"
@@ -55,7 +56,7 @@ func TestTrigger(t *testing.T) {
 		},
 	}
 
-	tr, err := trigger.New(mocks.AuthMock{})
+	tr, err := trigger.New(configuration.Config{ExternalDnsAddress: "8.8.8.8:53"}, mocks.AuthMock{})
 	if err != nil {
 		t.Error(err)
 		return

@@ -11,14 +11,16 @@
                     "endpoint":"http://device-selection-url:8080/v2/query/selectables?include_devices=true",
                     "body":"W3siZnVuY3Rpb25faWQiOiJmaWQifV0=",
                     "add_auth_token":true,
-                    "header":null
+                    "header":null,
+                    "isolated": false
                 },
                 "trigger":{
                     "method":"POST",
                     "endpoint":"http://smr:8080/instances/smart-service-id-foo/maintenance-procedures/update/start",
                     "body":"W3siaWQiOiJmb28iLCJ2YWx1ZSI6ImJhciIsImxhYmVsIjoiZm9vIiwidmFsdWVfbGFiZWwiOiJiYXIifV0=",
                     "add_auth_token":true,
-                    "header":null
+                    "header":null,
+                    "isolated": false
                 },
                 "created_at":0
             }

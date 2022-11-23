@@ -53,6 +53,7 @@ func TestWatcher(t *testing.T) {
 		MongoCollectionWatchedEntity: "test",
 		WatchInterval:                "300ms",
 		BatchSize:                    10,
+		ExternalDnsAddress:           "8.8.8.8:53",
 	}
 
 	a := mocks.AuthMock{}
@@ -62,12 +63,12 @@ func TestWatcher(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	c, err := checker.New(a)
+	c, err := checker.New(config, a)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	tr, err := trigger.New(a)
+	tr, err := trigger.New(config, a)
 	if err != nil {
 		t.Error(err)
 		return

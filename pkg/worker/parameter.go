@@ -101,9 +101,11 @@ func (this *Worker) getHashType(task lib_model.CamundaExternalTask) string {
 
 func (this *Worker) selectWatchedHttpRequest(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error) {
 	selectables := []func(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error){
-		this.getWatchedHttpRequest,
 		this.getWatchedDevicesHttpRequest,
 		this.getWatchedModifiedDevicesHttpRequest,
+	}
+	if this.config.AllowGenericWatchRequests {
+		selectables = append(selectables, this.getWatchedHttpRequest)
 	}
 	for _, f := range selectables {
 		req, err := f(task)
@@ -114,7 +116,7 @@ func (this *Worker) selectWatchedHttpRequest(task lib_model.CamundaExternalTask)
 			return req, err
 		}
 	}
-	return req, MissingVariableUsage
+	return req, fmt.Errorf("%w: no known watch request found", MissingVariableUsage)
 }
 
 var MissingVariableUsage = errors.New("missing variable")
@@ -136,6 +138,7 @@ func (this *Worker) getWatchedHttpRequest(task lib_model.CamundaExternalTask) (r
 	if req.Header == nil {
 		req.Header = map[string][]string{}
 	}
+	req.Isolated = true
 	return req, nil
 }
 

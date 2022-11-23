@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"io"
 	"net/http"
@@ -27,15 +28,23 @@ import (
 )
 
 type Checker struct {
-	auth Auth
+	auth           Auth
+	client         *http.Client
+	isolatedClient *http.Client
 }
 
 type Auth interface {
 	ExchangeUserToken(userid string) (token auth.Token, err error)
 }
 
-func New(auth Auth) (*Checker, error) {
-	return &Checker{auth: auth}, nil
+func New(config configuration.Config, auth Auth) (*Checker, error) {
+	return &Checker{
+		auth: auth,
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+		isolatedClient: config.GetIsolatedHttpClient(),
+	}, nil
 }
 
 func (this *Checker) Check(userId string, request model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error) {
@@ -68,8 +77,11 @@ func (this *Checker) request(userId string, trigger model.HttpRequest) (payload 
 		}
 		req.Header.Set("Authorization", token.Jwt())
 	}
-	client := http.Client{
-		Timeout: 5 * time.Second,
+	var client *http.Client
+	if trigger.Isolated {
+		client = this.isolatedClient
+	} else {
+		client = this.client
 	}
 	resp, err := client.Do(req)
 	if err != nil {
