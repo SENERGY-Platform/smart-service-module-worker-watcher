@@ -38,12 +38,12 @@ func (this *Worker) getMaintenanceProcedureEventName(task lib_model.CamundaExter
 	return result
 }
 
-func (this *Worker) getMaintenanceProcedureInputs(task lib_model.CamundaExternalTask) (result model.SmartServiceParameters) {
-	result = model.SmartServiceParameters{}
+func (this *Worker) getMaintenanceProcedureInputs(task lib_model.CamundaExternalTask) (result SmartServiceParameters) {
+	result = SmartServiceParameters{}
 	for key, variable := range task.Variables {
 		if strings.HasPrefix(key, this.config.WorkerParamPrefix+"maintenance_procedure_inputs.") {
 			id := strings.TrimPrefix(key, this.config.WorkerParamPrefix+"maintenance_procedure_inputs.")
-			parameter := model.SmartServiceParameter{
+			parameter := SmartServiceParameter{
 				Id:         id,
 				Label:      id,
 				ValueLabel: fmt.Sprint(variable.Value),
@@ -99,10 +99,31 @@ func (this *Worker) getHashType(task lib_model.CamundaExternalTask) string {
 	return str
 }
 
+func (this *Worker) selectWatchedHttpRequest(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error) {
+	selectables := []func(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error){
+		this.getWatchedHttpRequest,
+		this.getWatchedDevicesHttpRequest,
+		this.getWatchedModifiedDevicesHttpRequest,
+	}
+	for _, f := range selectables {
+		req, err := f(task)
+		if err == nil {
+			return req, err
+		}
+		if !errors.Is(err, MissingVariableUsage) {
+			return req, err
+		}
+	}
+	return req, MissingVariableUsage
+}
+
+var MissingVariableUsage = errors.New("missing variable")
+
 func (this *Worker) getWatchedHttpRequest(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error) {
-	variable, ok := task.Variables[this.config.WorkerParamPrefix+"watch_request"]
+	varName := this.config.WorkerParamPrefix + "watch_request"
+	variable, ok := task.Variables[varName]
 	if !ok {
-		return req, errors.New("missing watch_request")
+		return req, fmt.Errorf("%w: %v", MissingVariableUsage, varName)
 	}
 	str, ok := variable.Value.(string)
 	if !ok {
@@ -114,6 +135,54 @@ func (this *Worker) getWatchedHttpRequest(task lib_model.CamundaExternalTask) (r
 	}
 	if req.Header == nil {
 		req.Header = map[string][]string{}
+	}
+	return req, nil
+}
+
+func (this *Worker) getWatchedDevicesHttpRequest(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error) {
+	varName := this.config.WorkerParamPrefix + "watch_devices_by_criteria"
+	variable, ok := task.Variables[varName]
+	if !ok {
+		return req, fmt.Errorf("%w: %v", MissingVariableUsage, varName)
+	}
+	str, ok := variable.Value.(string)
+	if !ok {
+		return req, errors.New("expect watch_request as json encoded string")
+	}
+	criteria := []Criteria{}
+	err = json.Unmarshal([]byte(str), &criteria)
+	if err != nil {
+		return req, err
+	}
+	req = model.HttpRequest{
+		Method:       "POST",
+		Endpoint:     this.config.DeviceSelectionApi + "/v2/query/selectables?include_devices=true",
+		Body:         []byte(str),
+		AddAuthToken: true,
+	}
+	return req, nil
+}
+
+func (this *Worker) getWatchedModifiedDevicesHttpRequest(task lib_model.CamundaExternalTask) (req model.HttpRequest, err error) {
+	varName := this.config.WorkerParamPrefix + "watch_modified_devices_by_criteria"
+	variable, ok := task.Variables[varName]
+	if !ok {
+		return req, fmt.Errorf("%w: %v", MissingVariableUsage, varName)
+	}
+	str, ok := variable.Value.(string)
+	if !ok {
+		return req, errors.New("expect watch_request as json encoded string")
+	}
+	criteria := []Criteria{}
+	err = json.Unmarshal([]byte(str), &criteria)
+	if err != nil {
+		return req, err
+	}
+	req = model.HttpRequest{
+		Method:       "POST",
+		Endpoint:     this.config.DeviceSelectionApi + "/v2/query/selectables?include_devices=true&include_id_modified=true",
+		Body:         []byte(str),
+		AddAuthToken: true,
 	}
 	return req, nil
 }

@@ -76,7 +76,7 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 
 	id := this.getModuleId(task)
 	procedure := this.getMaintenanceProcedureEventName(task)
-	httpWatch, err := this.getWatchedHttpRequest(task)
+	httpWatch, err := this.selectWatchedHttpRequest(task)
 	if err != nil {
 		log.Println("ERROR: unable to read watched http request parameter", err)
 		return modules, outputs, err

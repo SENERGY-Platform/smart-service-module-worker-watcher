@@ -9,7 +9,8 @@
     "min_watch_interval": "1m",
     "default_watch_interval": "1h",
     "default_hash_type": "md5",
-    
+
+    "device_selection_api": "http://",
     
     "smart_service_repository_url": "",
 

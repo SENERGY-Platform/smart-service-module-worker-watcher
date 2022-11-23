@@ -54,6 +54,7 @@ func TestWithMocks(t *testing.T) {
 	}
 	libConf.CamundaWorkerWaitDurationInMs = 200
 	conf.WatchInterval = "1h"
+	conf.DeviceSelectionApi = "http://device-selection-url:8080"
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

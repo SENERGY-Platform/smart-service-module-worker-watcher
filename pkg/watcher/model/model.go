@@ -47,12 +47,3 @@ type HttpRequest struct {
 	AddAuthToken bool        `json:"add_auth_token"`
 	Header       http.Header `json:"header"`
 }
-
-type SmartServiceParameters []SmartServiceParameter
-
-type SmartServiceParameter struct {
-	Id         string      `json:"id"`
-	Value      interface{} `json:"value"`
-	Label      string      `json:"label"`
-	ValueLabel string      `json:"value_label,omitempty"`
-}

@@ -1,0 +1,24 @@
+[
+    {
+        "id": "task1",
+        "processInstanceId": "process-instance-1",
+        "processDefinitionId": "process-definition-1",
+        "variables": {
+            "watcher.maintenance_procedure": {
+                "value": "update"
+            },
+            "watcher.watch_interval": {
+                "value": "2h"
+            },
+            "watcher.hash_type": {
+                "value": "deviceids"
+            },
+            "watcher.watch_devices_by_criteria": {
+                "value": "[{\"function_id\":\"fid\"}]"
+            },
+            "watcher.maintenance_procedure_inputs.foo": {
+                "value": "bar"
+            }
+        }
+    }
+]

@@ -1,0 +1,27 @@
+{
+    "Set":[
+        {
+            "init":{
+                "id":"process-instance-1.task1",
+                "user_id":"ebbad927-4c39-4d12-8690-89b067dd4ce7",
+                "interval":"2h0m0s",
+                "hash_type":"deviceids",
+                "watch":{
+                    "method":"POST",
+                    "endpoint":"http://device-selection-url:8080/v2/query/selectables?include_devices=true&include_id_modified=true",
+                    "body":"W3siZnVuY3Rpb25faWQiOiJmaWQifV0=",
+                    "add_auth_token":true,
+                    "header":null
+                },
+                "trigger":{
+                    "method":"POST",
+                    "endpoint":"http://smr:8080/instances/smart-service-id-foo/maintenance-procedures/update/start",
+                    "body":"W3siaWQiOiJmb28iLCJ2YWx1ZSI6ImJhciIsImxhYmVsIjoiZm9vIiwidmFsdWVfbGFiZWwiOiJiYXIifV0=",
+                    "add_auth_token":true,
+                    "header":null
+                },
+                "created_at":0
+            }
+        }
+    ]
+}
