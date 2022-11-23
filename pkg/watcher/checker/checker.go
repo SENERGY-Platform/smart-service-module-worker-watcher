@@ -43,7 +43,7 @@ func New(config configuration.Config, auth Auth) (*Checker, error) {
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		isolatedClient: config.GetIsolatedHttpClient(),
+		isolatedClient: config.GetSaveHttpClient(),
 	}, nil
 }
 
