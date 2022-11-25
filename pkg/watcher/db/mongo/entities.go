@@ -56,7 +56,7 @@ func (this *Mongo) entityCollection() *mongo.Collection {
 func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
 	collection := this.entityCollection()
 	opt := options.Find().SetLimit(max)
-	err = this.transaction(func(ctx mongo.SessionContext) (interface{}, error) {
+	err = this.transaction(func(ctx context.Context) (interface{}, error) {
 		c, err := collection.Find(ctx, bson.M{"timestamp_of_next_check": bson.M{"$lt": time.Now().Unix()}}, opt)
 		if err != nil {
 			return nil, err
@@ -89,19 +89,27 @@ func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
 	return result, err
 }
 
-func (this *Mongo) transaction(f func(sessionContext mongo.SessionContext) (interface{}, error)) error {
-	wc := writeconcern.New(writeconcern.WMajority())
-	rc := readconcern.Snapshot()
-	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+func (this *Mongo) transaction(f func(ctx context.Context) (interface{}, error)) error {
+	if this.config.MongoUseRelSet {
+		wc := writeconcern.New(writeconcern.WMajority())
+		rc := readconcern.Snapshot()
+		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 
-	session, err := this.client.StartSession()
-	if err != nil {
+		session, err := this.client.StartSession()
+		if err != nil {
+			return err
+		}
+		defer session.EndSession(context.Background())
+
+		_, err = session.WithTransaction(context.Background(), func(sessCtx mongo.SessionContext) (interface{}, error) {
+			return f(sessCtx)
+		}, txnOpts)
+		return err
+	} else {
+		ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+		_, err := f(ctx)
 		return err
 	}
-	defer session.EndSession(context.Background())
-
-	_, err = session.WithTransaction(context.Background(), f, txnOpts)
-	return err
 }
 
 func (this *Mongo) UpdateHash(id string, userId string, hash string) error {

@@ -45,6 +45,7 @@ func TestDb(t *testing.T) {
 		MongoUrl:                     mongoUrl,
 		MongoTable:                   "test",
 		MongoCollectionWatchedEntity: "test",
+		MongoUseRelSet:               true,
 	}
 
 	m, err := mongo.New(config, ctx)

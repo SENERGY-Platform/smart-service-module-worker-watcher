@@ -1,5 +1,6 @@
 {
     "advertised_url": "http://localhost:8080",
+    "mongo_use_rel_set": false,
     "mongo_url": "",
     "mongo_table": "watcher",
     "mongo_collection_watched_entity": "watcher",

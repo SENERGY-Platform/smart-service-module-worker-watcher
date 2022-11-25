@@ -56,6 +56,7 @@ func TestWithMocks(t *testing.T) {
 	conf.WatchInterval = "1h"
 	conf.DeviceSelectionApi = "http://device-selection-url:8080"
 	conf.AllowGenericWatchRequests = true
+	conf.MongoUseRelSet = true
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()

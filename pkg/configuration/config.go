@@ -18,6 +18,7 @@ package configuration
 
 type Config struct {
 	AdvertisedUrl                string `json:"advertised_url"`
+	MongoUseRelSet               bool   `json:"mongo_use_rel_set"`
 	MongoUrl                     string `json:"mongo_url"`
 	MongoTable                   string `json:"mongo_table"`
 	MongoCollectionWatchedEntity string `json:"mongo_collection_watched_entity"`
