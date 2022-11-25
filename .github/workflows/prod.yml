@@ -33,5 +33,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            smartenergyplatform/smart-service-module-worker-device-watcher:prod
-            ghcr.io/senergy-platform/smart-service-module-worker-device-watcher:prod
+            smartenergyplatform/smart-service-module-worker-watcher:prod
+            ghcr.io/senergy-platform/smart-service-module-worker-watcher:prod
