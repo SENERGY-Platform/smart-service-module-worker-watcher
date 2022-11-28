@@ -159,7 +159,7 @@ func (this *Worker) getWatchedDevicesHttpRequest(task lib_model.CamundaExternalT
 	}
 	req = model.HttpRequest{
 		Method:       "POST",
-		Endpoint:     this.config.DeviceSelectionApi + "/v2/query/selectables?include_devices=true",
+		Endpoint:     this.config.DeviceSelectionUrl + "/v2/query/selectables?include_devices=true",
 		Body:         []byte(str),
 		AddAuthToken: true,
 	}
@@ -183,7 +183,7 @@ func (this *Worker) getWatchedModifiedDevicesHttpRequest(task lib_model.CamundaE
 	}
 	req = model.HttpRequest{
 		Method:       "POST",
-		Endpoint:     this.config.DeviceSelectionApi + "/v2/query/selectables?include_devices=true&include_id_modified=true",
+		Endpoint:     this.config.DeviceSelectionUrl + "/v2/query/selectables?include_devices=true&include_id_modified=true",
 		Body:         []byte(str),
 		AddAuthToken: true,
 	}

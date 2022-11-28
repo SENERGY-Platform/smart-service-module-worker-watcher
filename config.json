@@ -11,7 +11,7 @@
     "default_watch_interval": "1h",
     "default_hash_type": "md5",
 
-    "device_selection_api": "http://",
+    "device_selection_url": "http://",
     "allow_generic_watch_requests": false,
 
     "external_dns_address": "8.8.8.8:53",

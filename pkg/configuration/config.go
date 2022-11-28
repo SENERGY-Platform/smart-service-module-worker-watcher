@@ -28,7 +28,7 @@ type Config struct {
 	MinWatchInterval             string `json:"min_watch_interval"`
 	DefaultWatchInterval         string `json:"default_watch_interval"`
 	DefaultHashType              string `json:"default_hash_type"`
-	DeviceSelectionApi           string `json:"device_selection_api"`
+	DeviceSelectionUrl           string `json:"device_selection_url"`
 	AllowGenericWatchRequests    bool   `json:"allow_generic_watch_requests"`
 	UseExternalDnsForChecker     bool   `json:"use_external_dns_for_checker"`
 	ExternalDnsAddress           string `json:"external_dns_address"`
