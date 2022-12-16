@@ -3,7 +3,7 @@ module github.com/SENERGY-Platform/smart-service-module-worker-watcher
 go 1.19
 
 require (
-	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20221121125909-ac9bafdd3925
+	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20221216090404-75b6632e7fbf
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/ory/dockertest/v3 v3.9.1
@@ -18,10 +18,13 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/coocood/freecache v1.2.1 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/docker/cli v20.10.14+incompatible // indirect
 	github.com/docker/docker v20.10.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/dop251/goja v0.0.0-20221118162653-d4bf6fde1b86 // indirect
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
@@ -47,5 +50,5 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

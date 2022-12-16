@@ -131,6 +131,28 @@ func (this *SmartServiceRepoMock) getRouter() http.Handler {
 		json.NewEncoder(writer).Encode(userId)
 	})
 
+	router.GET("/instances-by-process-id/:id/variables-map", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		temp, _ := io.ReadAll(request.Body)
+		msg := strings.ReplaceAll(string(temp), this.config.AdvertisedUrl, "http://localhost")
+		this.logRequest(Request{
+			Method:   request.Method,
+			Endpoint: request.URL.Path,
+			Message:  msg,
+		})
+		writer.Write([]byte(`{}`))
+	})
+
+	router.PUT("/instances-by-process-id/:id/variables-map", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		temp, _ := io.ReadAll(request.Body)
+		msg := strings.ReplaceAll(string(temp), this.config.AdvertisedUrl, "http://localhost")
+		this.logRequest(Request{
+			Method:   request.Method,
+			Endpoint: request.URL.Path,
+			Message:  msg,
+		})
+		writer.WriteHeader(200)
+	})
+
 	return router
 }
 
