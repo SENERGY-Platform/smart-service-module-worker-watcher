@@ -18,8 +18,8 @@ package docker
 
 import (
 	"context"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -29,56 +29,54 @@ import (
 )
 
 func MongoRs(ctx context.Context, wg *sync.WaitGroup) (mongourl string, err error) {
-	pool, err := dockertest.NewPool("")
+	log.Println("start mongo-rs")
+
+	hostPort := "27017"
+	hostIp, err := getHostIp()
 	if err != nil {
 		return "", err
 	}
 
-	networks, _ := pool.Client.ListNetworks()
-	hostIp := ""
-	for _, network := range networks {
-		if network.Name == "bridge" {
-			hostIp = network.IPAM.Config[0].Gateway
-		}
-	}
+	mongourl = "mongodb://" + hostIp + ":" + hostPort
 
-	mongourl = "mongodb://" + hostIp + ":27017"
-
-	container, err := pool.BuildAndRunWithOptions("./docker/dockerfiles/mongo-rs", &dockertest.RunOptions{
-		Name:         "mongors",
-		ExposedPorts: []string{"27017/tcp"},
-		PortBindings: map[docker.Port][]docker.PortBinding{"27017/tcp": {{HostPort: "27017"}}},
-	}, func(config *docker.HostConfig) {
-		config.Tmpfs = map[string]string{"/data/db": "rw"}
+	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			FromDockerfile: testcontainers.FromDockerfile{
+				Dockerfile:    "mongo-rs",
+				Context:       "./docker/dockerfiles",
+				Repo:          "mongors",
+				PrintBuildLog: true,
+			},
+			ExposedPorts: []string{"27017:27017"},
+			WaitingFor: wait.ForAll(
+				wait.ForListeningPort("27017/tcp"),
+				wait.ForNop(waitretry(1*time.Minute, func(ctx context.Context, target wait.StrategyTarget) error {
+					log.Println("try mongodb connection...")
+					ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+					client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongourl))
+					if err != nil {
+						log.Println("connection-error:", err)
+						return err
+					}
+					err = client.Ping(ctx, readpref.Primary())
+					if err != nil {
+						log.Println("ping-error:", err)
+						return err
+					}
+					return nil
+				}))),
+		},
+		Started: true,
 	})
-
 	if err != nil {
 		return "", err
 	}
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		<-ctx.Done()
-		log.Println("DEBUG: remove container " + container.Container.Name)
-		container.Close()
-		wg.Done()
+		log.Println("DEBUG: remove container mongo-rs", c.Terminate(context.Background()))
 	}()
 
-	//go Dockerlog(pool, ctx, container, "MONGO")
-
-	err = pool.Retry(func() error {
-		log.Println("try mongodb connection...")
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongourl))
-		if err != nil {
-			log.Println("connection-error:", err)
-			return err
-		}
-		err = client.Ping(ctx, readpref.Primary())
-		if err != nil {
-			log.Println("ping-error:", err)
-			return err
-		}
-		return nil
-	})
-	return mongourl, err
+	return mongourl, nil
 }

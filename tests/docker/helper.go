@@ -16,7 +16,15 @@
 
 package docker
 
-import "net"
+import (
+	"context"
+	"errors"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
+	"log"
+	"net"
+	"time"
+)
 
 func getFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
@@ -30,4 +38,41 @@ func getFreePort() (int, error) {
 	}
 	defer listener.Close()
 	return listener.Addr().(*net.TCPAddr).Port, nil
+}
+
+func waitretry(timeout time.Duration, f func(ctx context.Context, target wait.StrategyTarget) error) func(ctx context.Context, target wait.StrategyTarget) error {
+	return func(ctx context.Context, target wait.StrategyTarget) (err error) {
+		return retry(timeout, func() error {
+			return f(ctx, target)
+		})
+	}
+}
+
+func retry(timeout time.Duration, f func() error) (err error) {
+	err = errors.New("initial")
+	start := time.Now()
+	for i := int64(1); err != nil && time.Since(start) < timeout; i++ {
+		err = f()
+		if err != nil {
+			log.Println("ERROR: :", err)
+			wait := time.Duration(i) * time.Second
+			if time.Since(start)+wait < timeout {
+				log.Println("ERROR: retry after:", wait.String())
+				time.Sleep(wait)
+			} else {
+				time.Sleep(time.Since(start) + wait - timeout)
+				return f()
+			}
+		}
+	}
+	return err
+}
+
+func getHostIp() (string, error) {
+	provider, err := testcontainers.NewDockerProvider(testcontainers.DefaultNetwork("bridge"))
+	if err != nil {
+		return "", err
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	return provider.GetGatewayIP(ctx)
 }
