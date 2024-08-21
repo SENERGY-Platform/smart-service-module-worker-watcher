@@ -25,6 +25,7 @@ import (
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/smartservicerepository"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/checker"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/cleanup"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/db/mongo"
@@ -50,6 +51,10 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		cleanupChecker := cleanup.New(smartServiceRepo)
 		w := watcher.New(config, db, c, t, cleanupChecker)
 		err = w.Start(ctx, wg)
+		if err != nil {
+			return nil, err
+		}
+		err = api.Start(ctx, config, w)
 		if err != nil {
 			return nil, err
 		}

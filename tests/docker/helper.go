@@ -23,10 +23,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
-func getFreePort() (int, error) {
+func GetFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {
 		return 0, err
@@ -38,6 +39,14 @@ func getFreePort() (int, error) {
 	}
 	defer listener.Close()
 	return listener.Addr().(*net.TCPAddr).Port, nil
+}
+
+func GetFreePortString() (string, error) {
+	port, err := GetFreePort()
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(port), nil
 }
 
 func waitretry(timeout time.Duration, f func(ctx context.Context, target wait.StrategyTarget) error) func(ctx context.Context, target wait.StrategyTarget) error {

@@ -21,12 +21,14 @@ import (
 	"encoding/json"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/checker"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/db/mongo"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/trigger"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/tests/docker"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/tests/mocks"
+	"net/http"
 	"reflect"
 	"sync"
 	"testing"
@@ -47,6 +49,12 @@ func TestWatcher(t *testing.T) {
 		return
 	}
 
+	freePort, err := docker.GetFreePortString()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	config := configuration.Config{
 		MongoUrl:                     mongoUrl,
 		MongoTable:                   "test",
@@ -54,6 +62,7 @@ func TestWatcher(t *testing.T) {
 		WatchInterval:                "300ms",
 		BatchSize:                    10,
 		ExternalDnsAddress:           "8.8.8.8:53",
+		AdvertisedUrl:                "http://localhost:" + freePort,
 	}
 
 	a := mocks.AuthMock{}
@@ -75,6 +84,11 @@ func TestWatcher(t *testing.T) {
 	}
 	w := watcher.New(config, db, c, tr, mocks.CleanupChecker{})
 	err = w.Start(ctx, wg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = api.Start(ctx, config, w)
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,9 +141,35 @@ func TestWatcher(t *testing.T) {
 
 	time.Sleep(6300 * time.Millisecond)
 	t.Run("stop watcher", func(t *testing.T) {
-		err = w.DeleteWatcher("test-user", "w1")
+		_, err = db.Read("w1", "test-user")
 		if err != nil {
 			t.Error(err)
+			return
+		}
+
+		req, err := http.NewRequest(http.MethodDelete, config.AdvertisedUrl+"/watcher/w1", nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		token, err := mocks.AuthMock{}.GenerateUserTokenById("test-user")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req.Header.Set("Authorization", token)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if resp.StatusCode != 200 {
+			t.Error(resp.StatusCode)
+			return
+		}
+		_, err = db.Read("w1", "test-user")
+		if err == nil {
+			t.Error("expected error")
 			return
 		}
 	})
