@@ -18,12 +18,12 @@ package watcher
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/db"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
-	"log"
-	"sync"
-	"time"
 )
 
 type Watcher struct {
@@ -92,7 +92,7 @@ func (this *Watcher) StartWithInterval(ctx context.Context, wg *sync.WaitGroup, 
 			case <-ticker.C:
 				err := this.RunLoop(ctx, this.config.BatchSize)
 				if err != nil {
-					log.Println("ERROR: Watcher::StartWithInterval::Run()", err)
+					this.config.GetLogger().Error("ERROR: Watcher::StartWithInterval::Run()", "error", err)
 				}
 			}
 		}

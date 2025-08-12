@@ -18,15 +18,15 @@ package mongo
 
 import (
 	"context"
+	"runtime/debug"
+	"time"
+
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"log"
-	"runtime/debug"
-	"time"
 )
 
 var WatchedEntityBson = getBsonFieldObject[model.WatchedEntity]()
@@ -68,7 +68,7 @@ func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
 		for i, element := range result {
 			dur, err := time.ParseDuration(element.Interval)
 			if err != nil {
-				log.Println("WARNING: invalid interval in WatchedEntity:", element.Id, element.Interval, err, "\n interpret interval as 1 hour")
+				this.config.GetLogger().Warn("WARNING: invalid interval in WatchedEntity --> interpret interval as 1 hour", "elementId", element.Id, "elementInterval", element.Interval, "error", err)
 				dur = time.Hour
 				err = nil
 			}

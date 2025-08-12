@@ -16,6 +16,16 @@
 
 package configuration
 
+import (
+	"log/slog"
+	"os"
+	"runtime/debug"
+	"strings"
+	"time"
+
+	struct_logger "github.com/SENERGY-Platform/go-service-base/struct-logger"
+)
+
 type Config struct {
 	AdvertisedUrl                string `json:"advertised_url"`
 	MongoUseRelSet               bool   `json:"mongo_use_rel_set"`
@@ -32,4 +42,31 @@ type Config struct {
 	AllowGenericWatchRequests    bool   `json:"allow_generic_watch_requests"`
 	UseExternalDnsForChecker     bool   `json:"use_external_dns_for_checker"`
 	ExternalDnsAddress           string `json:"external_dns_address"`
+
+	LogLevel string       `json:"log_level"`
+	logger   *slog.Logger `json:"-"`
+}
+
+func (this *Config) GetLogger() *slog.Logger {
+	if this.logger == nil {
+		info, ok := debug.ReadBuildInfo()
+		project := ""
+		if ok {
+			if parts := strings.Split(info.Main.Path, "/"); len(parts) > 2 {
+				project = strings.Join(parts[2:], "/")
+			}
+		}
+		this.logger = struct_logger.New(
+			struct_logger.Config{
+				Handler:    struct_logger.JsonHandlerSelector,
+				Level:      this.LogLevel,
+				TimeFormat: time.RFC3339Nano,
+				TimeUtc:    true,
+				AddMeta:    true,
+			},
+			os.Stdout,
+			"",
+			project).With("project-group", "smart-service")
+	}
+	return this.logger
 }

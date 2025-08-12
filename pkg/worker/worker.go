@@ -18,16 +18,16 @@ package worker
 
 import (
 	"encoding/json"
+	"net/url"
+	"runtime/debug"
+	"time"
+
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
 	libconfiguration "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
 	lib_model "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/model"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
-	"log"
-	"net/url"
-	"runtime/debug"
-	"time"
 )
 
 func New(config configuration.Config, libConfig libconfiguration.Config, auth *auth.Auth, smartServiceRepo SmartServiceRepo, w *watcher.Watcher) (*Worker, error) {
@@ -70,7 +70,7 @@ type SmartServiceRepo interface {
 func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.Module, outputs map[string]interface{}, err error) {
 	sm, err := this.smartServiceRepo.GetSmartServiceInstance(task.ProcessInstanceId)
 	if err != nil {
-		log.Println("ERROR: unable to get instance", err)
+		this.libConfig.GetLogger().Error("ERROR: unable to get instance", "error", err)
 		return modules, outputs, err
 	}
 
@@ -78,13 +78,13 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 	procedure := this.getMaintenanceProcedureEventName(task)
 	httpWatch, err := this.selectWatchedHttpRequest(task)
 	if err != nil {
-		log.Println("ERROR: unable to read watched http request parameter", err)
+		this.libConfig.GetLogger().Error("ERROR: unable to select watched http request parameter", "error", err)
 		return modules, outputs, err
 	}
 
 	maintenanceProcedureInputs, err := json.Marshal(this.getMaintenanceProcedureInputs(task))
 	if err != nil {
-		log.Println("ERROR: unable to marshal trigger payload", err)
+		this.libConfig.GetLogger().Error("ERROR: unable to marshal trigger payload", "error", err)
 		return modules, outputs, err
 	}
 
@@ -104,7 +104,7 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 	})
 
 	if err != nil {
-		log.Println("ERROR: unable to create watcher", err)
+		this.libConfig.GetLogger().Error("ERROR: unable to create watcher", "error", err)
 		return modules, outputs, err
 	}
 
@@ -131,21 +131,19 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 }
 
 func (this *Worker) Undo(modules []lib_model.Module, reason error) {
-	log.Println("UNDO:", reason)
+	this.libConfig.GetLogger().Error("undo", "reason", reason)
 	for _, module := range modules {
 		if module.DeleteInfo != nil {
 			if module.ModuleType == this.libConfig.CamundaWorkerTopic {
 				err := this.watcher.DeleteWatcher(module.DeleteInfo.UserId, module.Id)
 				if err != nil {
-					log.Println("ERROR:", err)
-					debug.PrintStack()
+					this.libConfig.GetLogger().Error("ERROR: unable to delete watcher", "error", err, "stack", string(debug.Stack()))
 				}
 			} else {
 				// keep this code, in case additional moules are added later
 				err := this.smartServiceRepo.UseModuleDeleteInfo(*module.DeleteInfo)
 				if err != nil {
-					log.Println("ERROR:", err)
-					debug.PrintStack()
+					this.libConfig.GetLogger().Error("ERROR: unable to use module delete info", "error", err, "stack", string(debug.Stack()))
 				}
 			}
 		}

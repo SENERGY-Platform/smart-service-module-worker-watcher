@@ -20,14 +20,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
-	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api/util"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"net/url"
 	"reflect"
-	"runtime/debug"
+
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api/util"
+	"github.com/julienschmidt/httprouter"
 )
 
 type EndpointMethod = func(config configuration.Config, router *httprouter.Router, ctrl Controller)
@@ -53,15 +54,15 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 
 	server := &http.Server{Addr: ":" + advertisedUrl.Port(), Handler: router}
 	go func() {
-		log.Println("listening on ", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			debug.PrintStack()
+		config.GetLogger().Info("listening on " + server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			config.GetLogger().Error("error starting server", "error", err)
 			log.Fatal("FATAL:", err)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		log.Println("api shutdown", server.Shutdown(context.Background()))
+		config.GetLogger().Info("api shutdown", "error", server.Shutdown(context.Background()))
 	}()
 	return
 }
@@ -79,11 +80,11 @@ func GetRouter(config configuration.Config, command Controller) http.Handler {
 	router := httprouter.New()
 	for _, e := range endpoints {
 		for name, call := range getEndpointMethods(e) {
-			log.Println("add endpoint " + name)
+			config.GetLogger().Info("add endpoint " + name)
 			call(config, router, command)
 		}
 	}
-	return util.NewLogger(util.NewCors(router))
+	return accesslog.New(util.NewCors(router))
 }
 
 func getEndpointMethods(e interface{}) map[string]func(config configuration.Config, router *httprouter.Router, ctrl Controller) {

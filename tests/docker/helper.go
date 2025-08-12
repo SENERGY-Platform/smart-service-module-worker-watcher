@@ -19,12 +19,12 @@ package docker
 import (
 	"context"
 	"errors"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"log"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func GetFreePort() (int, error) {
@@ -63,10 +63,8 @@ func retry(timeout time.Duration, f func() error) (err error) {
 	for i := int64(1); err != nil && time.Since(start) < timeout; i++ {
 		err = f()
 		if err != nil {
-			log.Println("ERROR: :", err)
 			wait := time.Duration(i) * time.Second
 			if time.Since(start)+wait < timeout {
-				log.Println("ERROR: retry after:", wait.String())
 				time.Sleep(wait)
 			} else {
 				time.Sleep(time.Since(start) + wait - timeout)
