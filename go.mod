@@ -5,7 +5,9 @@ go 1.24.0
 toolchain go1.24.6
 
 require (
-	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20250812092418-dd1d78d97121
+	github.com/SENERGY-Platform/go-service-base/struct-logger v0.4.1
+	github.com/SENERGY-Platform/service-commons v0.0.0-20250707072258-a5b49118c926
+	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20250826124800-822d514cda3d
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/testcontainers/testcontainers-go v0.33.0
@@ -19,10 +21,8 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/SENERGY-Platform/developer-notifications v0.0.4 // indirect
 	github.com/SENERGY-Platform/device-repository v0.2.27 // indirect
-	github.com/SENERGY-Platform/go-service-base/struct-logger v0.4.1 // indirect
 	github.com/SENERGY-Platform/models/go v0.0.0-20241007061544-de7132ae94e4 // indirect
 	github.com/SENERGY-Platform/permissions-v2 v0.0.38 // indirect
-	github.com/SENERGY-Platform/service-commons v0.0.0-20250707072258-a5b49118c926 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
