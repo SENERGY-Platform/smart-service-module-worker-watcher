@@ -6,8 +6,8 @@ toolchain go1.24.6
 
 require (
 	github.com/SENERGY-Platform/go-service-base/struct-logger v0.4.1
-	github.com/SENERGY-Platform/service-commons v0.0.0-20250707072258-a5b49118c926
-	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20250826124800-822d514cda3d
+	github.com/SENERGY-Platform/service-commons v0.0.0-20250903071414-1b34f1965afa
+	github.com/SENERGY-Platform/smart-service-module-worker-lib v0.0.0-20251118075759-40c0749a7f92
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/testcontainers/testcontainers-go v0.33.0
