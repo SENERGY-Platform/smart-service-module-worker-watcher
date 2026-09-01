@@ -53,10 +53,10 @@ func (this *Mongo) entityCollection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionWatchedEntity)
 }
 
-func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
+func (this *Mongo) Fetch(ctx context.Context, max int64) (result []model.WatchedEntity, err error) {
 	collection := this.entityCollection()
 	opt := options.Find().SetLimit(max)
-	err = this.transaction(func(ctx context.Context) (interface{}, error) {
+	err = this.transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		c, err := collection.Find(ctx, bson.M{"timestamp_of_next_check": bson.M{"$lt": time.Now().Unix()}}, opt)
 		if err != nil {
 			return nil, err
@@ -68,7 +68,7 @@ func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
 		for i, element := range result {
 			dur, err := time.ParseDuration(element.Interval)
 			if err != nil {
-				this.config.GetLogger().Warn("WARNING: invalid interval in WatchedEntity --> interpret interval as 1 hour", "elementId", element.Id, "elementInterval", element.Interval, "error", err)
+				this.config.GetLogger().WarnContext(ctx, "WARNING: invalid interval in WatchedEntity --> interpret interval as 1 hour", "elementId", element.Id, "elementInterval", element.Interval, "error", err)
 				dur = time.Hour
 				err = nil
 			}
@@ -89,7 +89,7 @@ func (this *Mongo) Fetch(max int64) (result []model.WatchedEntity, err error) {
 	return result, err
 }
 
-func (this *Mongo) transaction(f func(ctx context.Context) (interface{}, error)) error {
+func (this *Mongo) transaction(parent context.Context, f func(ctx context.Context) (interface{}, error)) error {
 	if this.config.MongoUseRelSet {
 		wc := writeconcern.New(writeconcern.WMajority())
 		rc := readconcern.Snapshot()
@@ -112,8 +112,8 @@ func (this *Mongo) transaction(f func(ctx context.Context) (interface{}, error))
 	}
 }
 
-func (this *Mongo) UpdateHash(id string, userId string, hash string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) UpdateHash(ctx context.Context, id string, userId string, hash string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.entityCollection().UpdateOne(ctx, bson.M{
 		WatchedEntityBson.Id:     id,
 		WatchedEntityBson.UserId: userId,
@@ -123,11 +123,11 @@ func (this *Mongo) UpdateHash(id string, userId string, hash string) error {
 	return err
 }
 
-func (this *Mongo) Set(element model.WatchedEntityInit) error {
+func (this *Mongo) Set(ctx context.Context, element model.WatchedEntityInit) error {
 	if element.CreatedAt == 0 {
 		element.CreatedAt = time.Now().Unix()
 	}
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.entityCollection().ReplaceOne(
 		ctx,
 		bson.M{
@@ -145,8 +145,8 @@ func (this *Mongo) Set(element model.WatchedEntityInit) error {
 	return err
 }
 
-func (this *Mongo) Read(id string, userId string) (result model.WatchedEntity, err error) {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) Read(ctx context.Context, id string, userId string) (result model.WatchedEntity, err error) {
+	ctx, _ = getTimeoutContext(ctx)
 	temp := this.entityCollection().FindOne(ctx, bson.M{WatchedEntityBson.Id: id, WatchedEntityBson.UserId: userId})
 	err = temp.Err()
 	if err != nil {
@@ -156,8 +156,8 @@ func (this *Mongo) Read(id string, userId string) (result model.WatchedEntity, e
 	return result, err
 }
 
-func (this *Mongo) Delete(id string, userId string) error {
-	ctx, _ := getTimeoutContext()
+func (this *Mongo) Delete(ctx context.Context, id string, userId string) error {
+	ctx, _ = getTimeoutContext(ctx)
 	_, err := this.entityCollection().DeleteMany(ctx, bson.M{
 		WatchedEntityBson.Id:     id,
 		WatchedEntityBson.UserId: userId,
@@ -165,9 +165,9 @@ func (this *Mongo) Delete(id string, userId string) error {
 	return err
 }
 
-func (this *Mongo) List(filter bson.M, query QueryOptions) (result []model.WatchedEntity, err error) {
+func (this *Mongo) List(ctx context.Context, filter bson.M, query QueryOptions) (result []model.WatchedEntity, err error) {
 	opt := createFindOptions(query)
-	ctx, _ := getTimeoutContext()
+	ctx, _ = getTimeoutContext(ctx)
 	if filter == nil {
 		filter = bson.M{}
 	}

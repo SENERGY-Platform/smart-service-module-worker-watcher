@@ -18,7 +18,9 @@ package trigger
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
@@ -47,8 +49,12 @@ func New(config configuration.Config, auth Auth) (*Trigger, error) {
 	}, nil
 }
 
-func (this *Trigger) Run(userId string, trigger model.HttpRequest) error {
+func (this *Trigger) Run(ctx context.Context, userId string, trigger model.HttpRequest) error {
 	req, err := http.NewRequest(trigger.Method, trigger.Endpoint, bytes.NewReader(trigger.Body))
+	if err != nil {
+		return err
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return err
 	}

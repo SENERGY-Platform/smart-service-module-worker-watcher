@@ -23,6 +23,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 	"reflect"
 	"time"
 )
@@ -37,7 +38,7 @@ var CreateCollections = []func(db *Mongo) error{}
 func New(conf configuration.Config, ctx context.Context) (*Mongo, error) {
 	timeout, _ := getTimeoutContext()
 	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
-	client, err := mongo.Connect(timeout, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg))
+	client, err := mongo.Connect(timeout, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg), options.Client().SetMonitor(otelmongo.NewMonitor()))
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +57,13 @@ func New(conf configuration.Config, ctx context.Context) (*Mongo, error) {
 	return db, nil
 }
 
-func getTimeoutContext() (context.Context, context.CancelFunc) {
+// getTimeoutContext derives a context with the mongo timeout from the given parent.
+// context.WithoutCancel keeps the trace-context and the baggage of the parent, which is
+// what the otelmongo monitor and the logging need, but not its cancellation: a caller that
+// gives up must not cut off a write that is already running.
+func getTimeoutContext(parent ...context.Context) (context.Context, context.CancelFunc) {
+	if len(parent) > 0 && parent[0] != nil {
+		return context.WithTimeout(context.WithoutCancel(parent[0]), 10*time.Second)
+	}
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }

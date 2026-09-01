@@ -54,7 +54,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		if err != nil {
 			return nil, err
 		}
-		err = api.Start(ctx, config, w)
+		err = api.Start(ctx, config, libConfig, w)
 		if err != nil {
 			return nil, err
 		}

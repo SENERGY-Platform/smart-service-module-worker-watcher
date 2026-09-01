@@ -67,7 +67,7 @@ func TestChecker(t *testing.T) {
 	}
 
 	t.Run("isolated local check", func(t *testing.T) {
-		_, _, err := c.Check("test-user", model.HttpRequest{
+		_, _, err := c.Check(ctx, "test-user", model.HttpRequest{
 			Method:       "POST",
 			Endpoint:     targetUrl + "/query",
 			Body:         []byte(`{"foo":"bar"}`),
@@ -82,7 +82,7 @@ func TestChecker(t *testing.T) {
 	})
 
 	t.Run("isolated public check", func(t *testing.T) {
-		_, _, err := c.Check("test-user", model.HttpRequest{
+		_, _, err := c.Check(ctx, "test-user", model.HttpRequest{
 			Method:       "GET",
 			Endpoint:     "http://example.com",
 			Body:         nil,
@@ -98,7 +98,7 @@ func TestChecker(t *testing.T) {
 
 	t.Run("first check", func(t *testing.T) {
 		expectedNewHash := "ae2d699aca20886f6bed96a0425c6168"
-		changed, newHash, err := c.Check("test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
+		changed, newHash, err := c.Check(ctx, "test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
 		if err != nil {
 			t.Error(err)
 			return
@@ -114,7 +114,7 @@ func TestChecker(t *testing.T) {
 
 	t.Run("unchanged", func(t *testing.T) {
 		expectedNewHash := "ae2d699aca20886f6bed96a0425c6168"
-		changed, newHash, err := c.Check("test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
+		changed, newHash, err := c.Check(ctx, "test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
 		if err != nil {
 			t.Error(err)
 			return
@@ -130,7 +130,7 @@ func TestChecker(t *testing.T) {
 
 	t.Run("changed", func(t *testing.T) {
 		expectedNewHash := "8977dfac2f8e04cb96e66882235f5aba"
-		changed, newHash, err := c.Check("test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
+		changed, newHash, err := c.Check(ctx, "test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
 		if err != nil {
 			t.Error(err)
 			return
@@ -146,7 +146,7 @@ func TestChecker(t *testing.T) {
 
 	t.Run("kept change", func(t *testing.T) {
 		expectedNewHash := "8977dfac2f8e04cb96e66882235f5aba"
-		changed, newHash, err := c.Check("test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
+		changed, newHash, err := c.Check(ctx, "test-user", checkRequest, checker.HASH_TYPE_MD5, lastHash)
 		if err != nil {
 			t.Error(err)
 			return

@@ -17,6 +17,7 @@
 package cleanup
 
 import (
+	"context"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/smartservicerepository"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 	"net/http"
@@ -31,15 +32,15 @@ func New(smr *smartservicerepository.SmartServiceRepository) *Checker {
 	return &Checker{smr: smr}
 }
 
-func (this *Checker) Check(entity model.WatchedEntity) (remove bool, err error) {
-	return Check(entity, this.smr)
+func (this *Checker) Check(ctx context.Context, entity model.WatchedEntity) (remove bool, err error) {
+	return Check(ctx, entity, this.smr)
 }
 
-func Check(element model.WatchedEntity, smr *smartservicerepository.SmartServiceRepository) (remove bool, err error) {
+func Check(ctx context.Context, element model.WatchedEntity, smr *smartservicerepository.SmartServiceRepository) (remove bool, err error) {
 	if time.Since(time.Unix(element.CreatedAt, 0)) < time.Minute {
 		return false, nil
 	}
-	_, err, code := smr.GetModule(element.UserId, element.Id)
+	_, err, code := smr.GetModule(ctx, element.UserId, element.Id)
 	if code == http.StatusNotFound {
 		return true, nil
 	}

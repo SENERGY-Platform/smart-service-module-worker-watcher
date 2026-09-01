@@ -17,6 +17,7 @@
 package worker
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"runtime/debug"
@@ -61,16 +62,16 @@ type Worker struct {
 }
 
 type SmartServiceRepo interface {
-	GetInstanceUser(instanceId string) (userId string, err error)
-	UseModuleDeleteInfo(info lib_model.ModuleDeleteInfo) error
-	ListExistingModules(processInstanceId string, query lib_model.ModulQuery) (result []lib_model.SmartServiceModule, err error)
-	GetSmartServiceInstance(processInstanceId string) (result lib_model.SmartServiceInstance, err error)
+	GetInstanceUser(ctx context.Context, instanceId string) (userId string, err error)
+	UseModuleDeleteInfo(ctx context.Context, info lib_model.ModuleDeleteInfo) error
+	ListExistingModules(ctx context.Context, processInstanceId string, query lib_model.ModulQuery) (result []lib_model.SmartServiceModule, err error)
+	GetSmartServiceInstance(ctx context.Context, processInstanceId string) (result lib_model.SmartServiceInstance, err error)
 }
 
-func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.Module, outputs map[string]interface{}, err error) {
-	sm, err := this.smartServiceRepo.GetSmartServiceInstance(task.ProcessInstanceId)
+func (this *Worker) Do(ctx context.Context, task lib_model.CamundaExternalTask) (modules []lib_model.Module, outputs map[string]interface{}, err error) {
+	sm, err := this.smartServiceRepo.GetSmartServiceInstance(ctx, task.ProcessInstanceId)
 	if err != nil {
-		this.libConfig.GetLogger().Error("ERROR: unable to get instance", "error", err)
+		this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to get instance", "error", err)
 		return modules, outputs, err
 	}
 
@@ -78,17 +79,17 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 	procedure := this.getMaintenanceProcedureEventName(task)
 	httpWatch, err := this.selectWatchedHttpRequest(task)
 	if err != nil {
-		this.libConfig.GetLogger().Error("ERROR: unable to select watched http request parameter", "error", err)
+		this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to select watched http request parameter", "error", err)
 		return modules, outputs, err
 	}
 
 	maintenanceProcedureInputs, err := json.Marshal(this.getMaintenanceProcedureInputs(task))
 	if err != nil {
-		this.libConfig.GetLogger().Error("ERROR: unable to marshal trigger payload", "error", err)
+		this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to marshal trigger payload", "error", err)
 		return modules, outputs, err
 	}
 
-	err = this.watcher.Set(model.WatchedEntityInit{
+	err = this.watcher.Set(ctx, model.WatchedEntityInit{
 		Id:       id,
 		UserId:   sm.UserId,
 		Interval: this.getWatchInterval(task).String(),
@@ -104,7 +105,7 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 	})
 
 	if err != nil {
-		this.libConfig.GetLogger().Error("ERROR: unable to create watcher", "error", err)
+		this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to create watcher", "error", err)
 		return modules, outputs, err
 	}
 
@@ -130,20 +131,20 @@ func (this *Worker) Do(task lib_model.CamundaExternalTask) (modules []lib_model.
 	return modules, outputs, err
 }
 
-func (this *Worker) Undo(modules []lib_model.Module, reason error) {
-	this.libConfig.GetLogger().Error("undo", "reason", reason)
+func (this *Worker) Undo(ctx context.Context, modules []lib_model.Module, reason error) {
+	this.libConfig.GetLogger().ErrorContext(ctx, "undo", "reason", reason)
 	for _, module := range modules {
 		if module.DeleteInfo != nil {
 			if module.ModuleType == this.libConfig.CamundaWorkerTopic {
-				err := this.watcher.DeleteWatcher(module.DeleteInfo.UserId, module.Id)
+				err := this.watcher.DeleteWatcher(ctx, module.DeleteInfo.UserId, module.Id)
 				if err != nil {
-					this.libConfig.GetLogger().Error("ERROR: unable to delete watcher", "error", err, "stack", string(debug.Stack()))
+					this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to delete watcher", "error", err, "stack", string(debug.Stack()))
 				}
 			} else {
 				// keep this code, in case additional moules are added later
-				err := this.smartServiceRepo.UseModuleDeleteInfo(*module.DeleteInfo)
+				err := this.smartServiceRepo.UseModuleDeleteInfo(ctx, *module.DeleteInfo)
 				if err != nil {
-					this.libConfig.GetLogger().Error("ERROR: unable to use module delete info", "error", err, "stack", string(debug.Stack()))
+					this.libConfig.GetLogger().ErrorContext(ctx, "ERROR: unable to use module delete info", "error", err, "stack", string(debug.Stack()))
 				}
 			}
 		}

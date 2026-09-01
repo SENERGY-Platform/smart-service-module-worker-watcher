@@ -19,6 +19,7 @@ package tests
 import (
 	"context"
 	"encoding/json"
+	libconfiguration "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api"
@@ -88,7 +89,7 @@ func TestWatcher(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = api.Start(ctx, config, w)
+	err = api.Start(ctx, config, libconfiguration.Config{}, w)
 	if err != nil {
 		t.Error(err)
 		return
@@ -118,7 +119,7 @@ func TestWatcher(t *testing.T) {
 	expectedRequests := []model.HttpRequest{expectetQuery, expectetQuery, expectetQuery, expectetTrigger, expectetQuery}
 
 	t.Run("add watcher", func(t *testing.T) {
-		err = db.Set(model.WatchedEntityInit{
+		err = db.Set(ctx, model.WatchedEntityInit{
 			Id:       "w1",
 			UserId:   "test-user",
 			Interval: "1s",
@@ -141,7 +142,7 @@ func TestWatcher(t *testing.T) {
 
 	time.Sleep(6300 * time.Millisecond)
 	t.Run("stop watcher", func(t *testing.T) {
-		_, err = db.Read("w1", "test-user")
+		_, err = db.Read(ctx, "w1", "test-user")
 		if err != nil {
 			t.Error(err)
 			return
@@ -167,7 +168,7 @@ func TestWatcher(t *testing.T) {
 			t.Error(resp.StatusCode)
 			return
 		}
-		_, err = db.Read("w1", "test-user")
+		_, err = db.Read(ctx, "w1", "test-user")
 		if err == nil {
 			t.Error("expected error")
 			return

@@ -16,13 +16,17 @@
 
 package db
 
-import "github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
+import (
+	"context"
+
+	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
+)
 
 type Database interface {
-	Fetch(max int64) ([]model.WatchedEntity, error)
-	UpdateHash(id string, userId string, hash string) error
+	Fetch(ctx context.Context, max int64) ([]model.WatchedEntity, error)
+	UpdateHash(ctx context.Context, id string, userId string, hash string) error
 
-	Set(model.WatchedEntityInit) error
-	Read(id string, userId string) (model.WatchedEntity, error)
-	Delete(id string, userId string) error
+	Set(ctx context.Context, element model.WatchedEntityInit) error
+	Read(ctx context.Context, id string, userId string) (model.WatchedEntity, error)
+	Delete(ctx context.Context, id string, userId string) error
 }

@@ -17,11 +17,12 @@
 package mocks
 
 import (
+	"context"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
 )
 
 type CleanupChecker struct{}
 
-func (this CleanupChecker) Check(entity model.WatchedEntity) (remove bool, err error) {
+func (this CleanupChecker) Check(ctx context.Context, entity model.WatchedEntity) (remove bool, err error) {
 	return false, nil
 }

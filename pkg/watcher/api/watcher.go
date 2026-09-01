@@ -50,7 +50,7 @@ func (this *WatcherEndpoints) Delete(config configuration.Config, router *httpro
 			return
 		}
 
-		err = ctrl.DeleteWatcher(token.GetUserId(), id)
+		err = ctrl.DeleteWatcher(request.Context(), token.GetUserId(), id)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return

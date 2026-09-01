@@ -56,7 +56,7 @@ func TestDb(t *testing.T) {
 
 	t.Run("create entities", func(t *testing.T) {
 		for i := 0; i < 50; i++ {
-			err = m.Set(model.WatchedEntityInit{
+			err = m.Set(ctx, model.WatchedEntityInit{
 				Id:       strconv.Itoa(i),
 				UserId:   "user",
 				Interval: "1h",
@@ -71,7 +71,7 @@ func TestDb(t *testing.T) {
 	done := map[string]bool{}
 
 	t.Run("fetch 10 (1)", func(t *testing.T) {
-		fetched, err := m.Fetch(10)
+		fetched, err := m.Fetch(ctx, 10)
 		if err != nil {
 			t.Error(err)
 			return
@@ -94,7 +94,7 @@ func TestDb(t *testing.T) {
 			}
 		})
 		t.Run("check list", func(t *testing.T) {
-			list, err := m.List(nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
+			list, err := m.List(ctx, nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
 			if err != nil {
 				t.Error(err)
 				return
@@ -135,7 +135,7 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("fetch 10 (2)", func(t *testing.T) {
-		fetched, err := m.Fetch(10)
+		fetched, err := m.Fetch(ctx, 10)
 		if err != nil {
 			t.Error(err)
 			return
@@ -158,7 +158,7 @@ func TestDb(t *testing.T) {
 			}
 		})
 		t.Run("check list", func(t *testing.T) {
-			list, err := m.List(nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
+			list, err := m.List(ctx, nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
 			if err != nil {
 				t.Error(err)
 				return
@@ -199,7 +199,7 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("set hash", func(t *testing.T) {
-		err = m.UpdateHash("2", "user", "foobar")
+		err = m.UpdateHash(ctx, "2", "user", "foobar")
 		if err != nil {
 			t.Error(err)
 			return
@@ -207,7 +207,7 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("read updated watcher", func(t *testing.T) {
-		watcher, err := m.Read("2", "user")
+		watcher, err := m.Read(ctx, "2", "user")
 		if err != nil {
 			t.Error(err)
 			return
@@ -218,7 +218,7 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("read unchanged watcher", func(t *testing.T) {
-		watcher, err := m.Read("3", "user")
+		watcher, err := m.Read(ctx, "3", "user")
 		if err != nil {
 			t.Error(err)
 			return
@@ -229,12 +229,12 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("delete watcher", func(t *testing.T) {
-		err = m.Delete("4", "user")
+		err = m.Delete(ctx, "4", "user")
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		list, err := m.List(nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
+		list, err := m.List(ctx, nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
 		if err != nil {
 			t.Error(err)
 			return
@@ -245,12 +245,12 @@ func TestDb(t *testing.T) {
 	})
 
 	t.Run("delete idempotent", func(t *testing.T) {
-		err = m.Delete("4", "user")
+		err = m.Delete(ctx, "4", "user")
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		list, err := m.List(nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
+		list, err := m.List(ctx, nil, MockQueryOptions{sort: "id.asc", limit: 100, offset: 0})
 		if err != nil {
 			t.Error(err)
 			return

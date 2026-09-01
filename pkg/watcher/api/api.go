@@ -25,7 +25,9 @@ import (
 	"net/url"
 	"reflect"
 
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
+	libconfiguration "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/api/util"
 	"github.com/julienschmidt/httprouter"
@@ -36,16 +38,16 @@ type EndpointMethod = func(config configuration.Config, router *httprouter.Route
 var endpoints = []interface{}{} //list of objects with EndpointMethod
 
 type Controller interface {
-	DeleteWatcher(userId string, watcherId string) (err error)
+	DeleteWatcher(ctx context.Context, userId string, watcherId string) (err error)
 }
 
-func Start(ctx context.Context, config configuration.Config, ctrl Controller) (err error) {
+func Start(ctx context.Context, config configuration.Config, libConfig libconfiguration.Config, ctrl Controller) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
 	}()
-	router := GetRouter(config, ctrl)
+	router := GetRouter(ctx, config, libConfig, ctrl)
 
 	advertisedUrl, err := url.Parse(config.AdvertisedUrl)
 	if err != nil {
@@ -54,15 +56,15 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 
 	server := &http.Server{Addr: ":" + advertisedUrl.Port(), Handler: router}
 	go func() {
-		config.GetLogger().Info("listening on " + server.Addr)
+		config.GetLogger().InfoContext(ctx, "listening on "+server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			config.GetLogger().Error("error starting server", "error", err)
+			config.GetLogger().ErrorContext(ctx, "error starting server", "error", err)
 			log.Fatal("FATAL:", err)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		config.GetLogger().Info("api shutdown", "error", server.Shutdown(context.Background()))
+		config.GetLogger().InfoContext(ctx, "api shutdown", "error", server.Shutdown(context.Background()))
 	}()
 	return
 }
@@ -76,15 +78,25 @@ func Start(ctx context.Context, config configuration.Config, ctrl Controller) (e
 // @securityDefinitions.apikey Bearer
 // @in header
 // @name Authorization
-func GetRouter(config configuration.Config, command Controller) http.Handler {
+func GetRouter(ctx context.Context, config configuration.Config, libConfig libconfiguration.Config, command Controller) http.Handler {
 	router := httprouter.New()
 	for _, e := range endpoints {
 		for name, call := range getEndpointMethods(e) {
-			config.GetLogger().Info("add endpoint " + name)
+			config.GetLogger().InfoContext(ctx, "add endpoint "+name)
 			call(config, router, command)
 		}
 	}
-	return accesslog.New(util.NewCors(router))
+
+	var handler http.Handler = router
+	//HTTPOpenTelemetry extracts the trace-context of incoming requests; a failure must not
+	//keep this server from serving, tracing is best-effort.
+	otelHandler, err := otelx.HTTPOpenTelemetry(ctx, libConfig.OtelEndpoint, libconfiguration.ServiceName(), handler)
+	if err != nil {
+		config.GetLogger().ErrorContext(ctx, "unable to init open-telemetry -> continue without tracing", "error", err)
+	} else {
+		handler = otelHandler
+	}
+	return accesslog.New(util.NewCors(handler))
 }
 
 func getEndpointMethods(e interface{}) map[string]func(config configuration.Config, router *httprouter.Router, ctrl Controller) {

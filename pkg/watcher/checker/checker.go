@@ -18,7 +18,9 @@ package checker
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/SENERGY-Platform/gin-middleware/otelx"
 	"github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/auth"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/watcher/model"
@@ -47,8 +49,8 @@ func New(config configuration.Config, auth Auth) (*Checker, error) {
 	}, nil
 }
 
-func (this *Checker) Check(userId string, request model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error) {
-	payload, err := this.request(userId, request)
+func (this *Checker) Check(ctx context.Context, userId string, request model.HttpRequest, hashType string, lastHash string) (changed bool, newHash string, err error) {
+	payload, err := this.request(ctx, userId, request)
 	if err != nil {
 		return false, "", err
 	}
@@ -62,8 +64,12 @@ func (this *Checker) Check(userId string, request model.HttpRequest, hashType st
 	return changed, newHash, nil
 }
 
-func (this *Checker) request(userId string, trigger model.HttpRequest) (payload []byte, err error) {
+func (this *Checker) request(ctx context.Context, userId string, trigger model.HttpRequest) (payload []byte, err error) {
 	req, err := http.NewRequest(trigger.Method, trigger.Endpoint, bytes.NewReader(trigger.Body))
+	if err != nil {
+		return nil, err
+	}
+	err = otelx.InjectContextToRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,7 @@
 package mocks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	libconfig "github.com/SENERGY-Platform/smart-service-module-worker-lib/pkg/configuration"
@@ -44,32 +45,32 @@ func NewDbRecorder(config configuration.Config, libconfig libconfig.Config, db d
 	}
 }
 
-func (this *DbRecorder) Fetch(max int64) ([]model.WatchedEntity, error) {
+func (this *DbRecorder) Fetch(ctx context.Context, max int64) ([]model.WatchedEntity, error) {
 	this.records["Fetch"] = append(this.records["Fetch"], map[string]interface{}{"max": max})
-	return this.db.Fetch(max)
+	return this.db.Fetch(ctx, max)
 }
 
-func (this *DbRecorder) UpdateHash(id string, userId string, hash string) error {
+func (this *DbRecorder) UpdateHash(ctx context.Context, id string, userId string, hash string) error {
 	this.records["UpdateHash"] = append(this.records["UpdateHash"], map[string]interface{}{"id": id, "userId": userId, "hash": hash})
-	return this.db.UpdateHash(id, userId, hash)
+	return this.db.UpdateHash(ctx, id, userId, hash)
 }
 
-func (this *DbRecorder) Set(init model.WatchedEntityInit) error {
+func (this *DbRecorder) Set(ctx context.Context, init model.WatchedEntityInit) error {
 	init.CreatedAt = 0
 	init.Trigger.Endpoint = "http://smr:8080" + strings.TrimPrefix(init.Trigger.Endpoint, this.libconfig.SmartServiceRepositoryUrl)
 
 	this.records["Set"] = append(this.records["Set"], map[string]interface{}{"init": init})
-	return this.db.Set(init)
+	return this.db.Set(ctx, init)
 }
 
-func (this *DbRecorder) Read(id string, userId string) (model.WatchedEntity, error) {
+func (this *DbRecorder) Read(ctx context.Context, id string, userId string) (model.WatchedEntity, error) {
 	this.records["Read"] = append(this.records["Read"], map[string]interface{}{"id": id, "userId": userId})
-	return this.db.Read(id, userId)
+	return this.db.Read(ctx, id, userId)
 }
 
-func (this *DbRecorder) Delete(id string, userId string) error {
+func (this *DbRecorder) Delete(ctx context.Context, id string, userId string) error {
 	this.records["Delete"] = append(this.records["Delete"], map[string]interface{}{"id": id, "userId": userId})
-	return this.db.Delete(id, userId)
+	return this.db.Delete(ctx, id, userId)
 }
 
 func (this *DbRecorder) CheckExpectedRequestsFromFileLocation(fileLocation string) error {

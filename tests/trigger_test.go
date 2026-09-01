@@ -63,7 +63,7 @@ func TestTrigger(t *testing.T) {
 	}
 
 	t.Run("trigger with auth", func(t *testing.T) {
-		err = tr.Run("test-user", model.HttpRequest{
+		err = tr.Run(ctx, "test-user", model.HttpRequest{
 			Method:       "POST",
 			Endpoint:     targetUrl + "/query",
 			Body:         []byte(`{"foo":"bar"}`),
@@ -77,7 +77,7 @@ func TestTrigger(t *testing.T) {
 	})
 
 	t.Run("trigger without auth", func(t *testing.T) {
-		err = tr.Run("test-user", model.HttpRequest{
+		err = tr.Run(ctx, "test-user", model.HttpRequest{
 			Method:       "POST",
 			Endpoint:     targetUrl + "/query",
 			Body:         []byte(`{"foo":"bar"}`),
