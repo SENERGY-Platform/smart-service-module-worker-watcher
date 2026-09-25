@@ -18,6 +18,8 @@ package mongo
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/SENERGY-Platform/smart-service-module-worker-watcher/pkg/configuration"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
@@ -35,12 +37,32 @@ type Mongo struct {
 
 var CreateCollections = []func(db *Mongo) error{}
 
+var (
+	errEmptyDatabase   = errors.New("mongo database name must not be empty")
+	errMissingPassword = errors.New("mongo password must not be empty when a mongo user is set")
+)
+
 func New(conf configuration.Config, ctx context.Context) (*Mongo, error) {
-	timeout, _ := getTimeoutContext()
-	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
-	client, err := mongo.Connect(timeout, options.Client().ApplyURI(conf.MongoUrl), options.Client().SetRegistry(reg), options.Client().SetMonitor(otelmongo.NewMonitor()))
+	if err := validateConfig(conf); err != nil {
+		return nil, err
+	}
+	return start(ctx, conf, clientOptions(conf), 10*time.Second)
+}
+
+// start disconnects the client on every failure path, so a failed startup leaves nothing connected.
+func start(ctx context.Context, conf configuration.Config, opts *options.ClientOptions, timeout time.Duration) (*Mongo, error) {
+	connectCtx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client, err := mongo.Connect(connectCtx, opts)
 	if err != nil {
 		return nil, err
+	}
+	// listCollections needs authorization, unlike Connect and Ping, so wrong or missing
+	// credentials fail here instead of at the first query.
+	listOpts := options.ListCollections().SetNameOnly(true).SetAuthorizedCollections(true)
+	if _, err = client.Database(conf.MongoDatabase).ListCollectionNames(connectCtx, bson.D{}, listOpts); err != nil {
+		client.Disconnect(context.Background())
+		return nil, fmt.Errorf("mongo startup check failed: %w", err)
 	}
 	db := &Mongo{config: conf, client: client}
 	for _, creators := range CreateCollections {
@@ -55,6 +77,30 @@ func New(conf configuration.Config, ctx context.Context) (*Mongo, error) {
 		client.Disconnect(context.Background())
 	}()
 	return db, nil
+}
+
+func validateConfig(conf configuration.Config) error {
+	if conf.MongoDatabase == "" {
+		return errEmptyDatabase
+	}
+	if conf.MongoUser != "" && conf.MongoPassword == "" {
+		return errMissingPassword
+	}
+	return nil
+}
+
+// clientOptions applies the credentials after the URI so they replace any given in MONGO_URL.
+func clientOptions(conf configuration.Config) *options.ClientOptions {
+	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).Build() //ensure map marshalling to interface
+	opts := options.Client().ApplyURI(conf.MongoUrl).SetRegistry(reg).SetMonitor(otelmongo.NewMonitor())
+	if conf.MongoUser != "" {
+		opts.SetAuth(options.Credential{
+			Username:   conf.MongoUser,
+			Password:   conf.MongoPassword,
+			AuthSource: conf.MongoAuthSource,
+		})
+	}
+	return opts
 }
 
 // getTimeoutContext derives a context with the mongo timeout from the given parent.

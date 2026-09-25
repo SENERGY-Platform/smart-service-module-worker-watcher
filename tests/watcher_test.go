@@ -58,7 +58,7 @@ func TestWatcher(t *testing.T) {
 
 	config := configuration.Config{
 		MongoUrl:                     mongoUrl,
-		MongoTable:                   "test",
+		MongoDatabase:                "test",
 		MongoCollectionWatchedEntity: "test",
 		WatchInterval:                "300ms",
 		BatchSize:                    10,

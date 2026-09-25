@@ -1,8 +1,11 @@
 {
     "advertised_url": "http://localhost:8080",
     "mongo_use_rel_set": false,
-    "mongo_url": "",
-    "mongo_table": "watcher",
+    "mongo_url": "mongodb://localhost:27017",
+    "mongo_user": "",
+    "mongo_password": "",
+    "mongo_auth_source": "admin",
+    "mongo_database": "smart_service_watcher",
     "mongo_collection_watched_entity": "watcher",
     "watch_interval": "1s",
     "batch_size": 100,

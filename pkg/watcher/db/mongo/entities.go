@@ -34,7 +34,7 @@ var WatchedEntityBson = getBsonFieldObject[model.WatchedEntity]()
 func init() {
 	CreateCollections = append(CreateCollections, func(db *Mongo) error {
 		var err error
-		collection := db.client.Database(db.config.MongoTable).Collection(db.config.MongoCollectionWatchedEntity)
+		collection := db.client.Database(db.config.MongoDatabase).Collection(db.config.MongoCollectionWatchedEntity)
 		err = db.ensureCompoundIndex(collection, "entity_id_user_index", true, true, WatchedEntityBson.Id, WatchedEntityBson.UserId)
 		if err != nil {
 			debug.PrintStack()
@@ -50,7 +50,7 @@ func init() {
 }
 
 func (this *Mongo) entityCollection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollectionWatchedEntity)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollectionWatchedEntity)
 }
 
 func (this *Mongo) Fetch(ctx context.Context, max int64) (result []model.WatchedEntity, err error) {

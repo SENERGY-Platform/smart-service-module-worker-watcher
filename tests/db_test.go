@@ -43,7 +43,7 @@ func TestDb(t *testing.T) {
 
 	config := configuration.Config{
 		MongoUrl:                     mongoUrl,
-		MongoTable:                   "test",
+		MongoDatabase:                "test",
 		MongoCollectionWatchedEntity: "test",
 		MongoUseRelSet:               true,
 	}
