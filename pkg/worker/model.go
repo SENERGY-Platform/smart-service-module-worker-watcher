@@ -16,11 +16,24 @@
 
 package worker
 
+import "slices"
+
 type Criteria struct {
 	Interaction   *Interaction `json:"interaction" bson:"interaction"`
 	FunctionId    *string      `json:"function_id" bson:"function_id"`
 	DeviceClassId *string      `json:"device_class_id" bson:"device_class_id"`
-	AspectId      *string      `json:"aspect_id" bson:"aspect_id"`
+	AspectId      *string      `json:"aspect_id" bson:"aspect_id"` //deprecated: alias for a single element AspectIds
+	AspectIds     []string     `json:"aspect_ids,omitempty" bson:"aspect_ids,omitempty"`
+}
+
+// GetAspectIds returns the aspects a criteria asks for, with the deprecated AspectId folded
+// in. The criteria is passed on to the device-selection unchanged, which resolves the alias
+// the same way.
+func (this Criteria) GetAspectIds() []string {
+	if this.AspectId == nil || *this.AspectId == "" || slices.Contains(this.AspectIds, *this.AspectId) {
+		return this.AspectIds
+	}
+	return append(slices.Clone(this.AspectIds), *this.AspectId)
 }
 
 type Interaction string
